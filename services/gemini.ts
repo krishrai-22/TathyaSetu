@@ -2,7 +2,6 @@ import { GoogleGenAI, Type, Chat, Modality } from "@google/genai";
 import { AnalysisResult, FullAnalysisResponse, GroundingSource, VerdictType, Language, NewsItem } from "../types";
 
 // Initialize the API client
-// CRITICAL: process.env.API_KEY is guaranteed to be available in this environment.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Switch to Flash model for faster (<5s) response times
@@ -25,6 +24,28 @@ const getLanguageName = (lang: Language): string => {
   };
   return map[lang] || "English";
 };
+
+// Helper to convert File to GenerativePart
+async function fileToPart(file: File): Promise<{ inlineData: { data: string; mimeType: string } }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        const base64String = reader.result.split(',')[1];
+        resolve({
+          inlineData: {
+            data: base64String,
+            mimeType: file.type,
+          },
+        });
+      } else {
+        reject(new Error("Failed to read file"));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 // PCM Decoding for TTS
 function decode(base64: string) {
@@ -58,22 +79,13 @@ export async function pcmToAudioBuffer(
 }
 
 export const analyzeContent = async (
-  text: string, 
+  input: string | File | { type: 'url'; value: string }, 
   language: Language = 'en'
 ): Promise<FullAnalysisResponse> => {
-  if (!text || text.trim().length === 0) {
-    throw new Error("Please enter text to analyze.");
-  }
-
+  
   const languageInstruction = getLanguageName(language);
-
-  // HIGHLY OPTIMIZED PROMPT FOR SPEED (<3s)
-  const promptText = `
+  let promptText = `
     Analyze for misinformation. Output JSON in ${languageInstruction}.
-    
-    Context:
-    Text: "${text}"
-
     Instructions:
     1. Use googleSearch to verify.
     2. Be EXTREMELY CONCISE.
@@ -84,11 +96,31 @@ export const analyzeContent = async (
        - detailedAnalysis: Max 2 sentences explaining why.
        - keyPoints: Array of max 3 short bullet points.
   `;
+  
+  let contentParts: any[] = [];
+
+  if (typeof input === 'string') {
+    if (!input.trim()) throw new Error("Please enter text to analyze.");
+    contentParts = [
+      { text: `Context:\nText: "${input}"\n\n` + promptText }
+    ];
+  } else if (input instanceof File) {
+    const filePart = await fileToPart(input);
+    contentParts = [
+      filePart,
+      { text: `Analyze this media (image/audio/video) for misinformation. ` + promptText }
+    ];
+  } else if (typeof input === 'object' && input.type === 'url') {
+    // For URLs, we rely on Google Search grounding to find info about the link
+    contentParts = [
+      { text: `Verify the credibility of this link: "${input.value}". ` + promptText }
+    ];
+  }
 
   try {
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: promptText,
+      contents: { parts: contentParts },
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -128,7 +160,6 @@ export const analyzeContent = async (
       });
     }
 
-    // Filter out duplicate sources based on URI
     const uniqueSources = sources.filter((v, i, a) => a.findIndex(t => (t.uri === v.uri)) === i);
 
     return {
@@ -138,8 +169,8 @@ export const analyzeContent = async (
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    if (error.status === 429 || error.code === 429) {
-         throw new Error("Quota exceeded. Please try again later.");
+    if (error.status === 429 || error.code === 429 || error.message?.includes('429')) {
+         throw new Error("Quota exceeded (429). The free tier limit has been reached. Please try again in a few minutes.");
     }
     throw new Error(error.message || "Failed to analyze content. Please try again.");
   }
@@ -151,7 +182,6 @@ export const fetchTrendingNews = async (
   count: number = 4
 ): Promise<NewsItem[]> => {
   let region = "Global";
-  // For any Indian language, prioritize Indian news
   if (language !== 'en') {
     region = "India";
   } else if (category === 'India') {
@@ -159,19 +189,14 @@ export const fetchTrendingNews = async (
   }
   
   const langName = getLanguageName(language);
-
-  // Construct a concise query to hit Google News directly for speed
-  const query = `site:news.google.com "${category}" news ${region} when:24h`;
-
-  // Extremely streamlined prompt for speed (<2s goal)
+  
+  // Extremely streamlined prompt for speed
   const prompt = `
     Find ${count} "news.google.com" links for "${category}" news in ${region}.
     Prefer articles in ${langName} if available, otherwise English.
     
     JSON Output:
     [{"title": "Str", "snippet": "Short str", "source": "Publisher", "url": "https://news.google.com/...", "publishedTime": "Str"}]
-    
-    If no direct article link, use: https://news.google.com/search?q={title}
   `;
 
   try {
@@ -186,7 +211,6 @@ export const fetchTrendingNews = async (
 
     if (response.text) {
       const items = JSON.parse(response.text) as NewsItem[];
-      // Client-side fallback to ensure 100% compliance with Google News URL rule
       return items.map(item => ({
         ...item,
         url: item.url?.includes('news.google.com') 
@@ -203,18 +227,15 @@ export const fetchTrendingNews = async (
 
 export const createChatSession = (language: Language = 'en', context?: AnalysisResult): Chat => {
   const langName = getLanguageName(language);
-  let instruction = `You are a friendly and expert AI assistant specializing in media literacy, fact-checking, and misinformation detection. You explain complex concepts simply. Keep your answers concise and helpful. Reply in ${langName}.`;
+  let instruction = `You are a friendly and expert AI assistant specializing in media literacy. Reply in ${langName}.`;
   
   let contextPrompt = "";
   if (context) {
     contextPrompt = `
-      The user is asking questions about a specific analysis you just performed.
-      Here is the context of that analysis:
+      Context of previous analysis:
       Verdict: ${context.verdict}
       Summary: ${context.summary}
       Detailed Analysis: ${context.detailedAnalysis}
-      
-      Please answer the user's follow-up questions based on this context.
     `;
   }
 
@@ -228,8 +249,6 @@ export const createChatSession = (language: Language = 'en', context?: AnalysisR
 
 export const streamAudio = async function* (text: string, language: Language = 'en'): AsyncGenerator<Uint8Array, void, unknown> {
   const ttsModel = "gemini-2.5-flash-preview-tts";
-  
-  // Use 'Puck' as a consistent voice. 
   const voiceName = 'Puck';
 
   try {
@@ -261,16 +280,11 @@ export const translateAnalysis = async (
   targetLanguage: Language
 ): Promise<AnalysisResult> => {
   const modelId = "gemini-3-flash-preview";
-  
   const targetLangName = getLanguageName(targetLanguage);
 
   const prompt = `
-    Translate the values of the following JSON object into ${targetLangName}.
-    Maintain the JSON structure exactly. Do not translate keys (like 'verdict', 'confidence').
-    Only translate the string values for 'summary', 'detailedAnalysis', and the items in the 'keyPoints' array.
-    
-    JSON to translate:
-    ${JSON.stringify(result)}
+    Translate values to ${targetLangName}. Maintain JSON structure.
+    JSON: ${JSON.stringify(result)}
   `;
 
   const response = await ai.models.generateContent({

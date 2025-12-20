@@ -48,14 +48,13 @@ export const PopupApp: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  // Updated to match new text-only signature
-  const handleAnalyze = async (text: string) => {
+  const handleAnalyze = async (content: string | File | { type: 'url'; value: string }) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
     
     try {
-      const data = await analyzeContent(text, language);
+      const data = await analyzeContent(content, language);
       setResult(data);
     } catch (err: any) {
       setError(err.message);
@@ -120,7 +119,6 @@ export const PopupApp: React.FC = () => {
                </div>
             )}
 
-            {/* We render a customized view of InputForm by modifying props or using CSS */}
             <div className="popup-input-wrapper">
                  <InputForm 
                     onAnalyze={handleAnalyze} 

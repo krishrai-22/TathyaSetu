@@ -29,13 +29,13 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleAnalyze = async (text: string) => {
+  const handleAnalyze = async (content: string | File | { type: 'url'; value: string }) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
     
     try {
-      const data = await analyzeContent(text, language);
+      const data = await analyzeContent(content, language);
       setResult(data);
     } catch (err: any) {
       setError(err.message);
@@ -48,9 +48,6 @@ const App: React.FC = () => {
     const inputElement = document.getElementById('analyzer');
     if (inputElement) {
       inputElement.scrollIntoView({ behavior: 'smooth' });
-      // Try to focus the textarea inside it if possible
-      const textarea = inputElement.querySelector('textarea');
-      if (textarea) textarea.focus();
     }
   };
 

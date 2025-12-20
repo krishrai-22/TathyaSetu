@@ -68,7 +68,7 @@ export const WhatsAppDemo: React.FC<WhatsAppDemoProps> = ({ t, language, onClose
 
     try {
       // Actually call Gemini API
-      // Updated to match new text-only signature
+      // Since analyzeContent accepts string | File | url obj, string is fine.
       const result = await analyzeContent(userText, language);
       
       const analysis = result.result;
@@ -104,7 +104,7 @@ export const WhatsAppDemo: React.FC<WhatsAppDemoProps> = ({ t, language, onClose
     } catch (error) {
        const errorMsg: WAMessage = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I couldn't verify that right now. Please try again.",
+        text: "Sorry, I couldn't verify that right now. Please try again later.",
         isUser: false,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         status: 'read'
