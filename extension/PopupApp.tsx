@@ -48,13 +48,14 @@ export const PopupApp: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleAnalyze = async (text: string, file: File | null, url: string | null) => {
+  // Updated to match new text-only signature
+  const handleAnalyze = async (text: string) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
     
     try {
-      const data = await analyzeContent(text, file, url, language);
+      const data = await analyzeContent(text, language);
       setResult(data);
     } catch (err: any) {
       setError(err.message);

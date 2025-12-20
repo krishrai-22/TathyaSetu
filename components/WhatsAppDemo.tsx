@@ -68,7 +68,8 @@ export const WhatsAppDemo: React.FC<WhatsAppDemoProps> = ({ t, language, onClose
 
     try {
       // Actually call Gemini API
-      const result = await analyzeContent(userText, null, null, language);
+      // Updated to match new text-only signature
+      const result = await analyzeContent(userText, language);
       
       const analysis = result.result;
       

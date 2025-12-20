@@ -26,26 +26,6 @@ const getLanguageName = (lang: Language): string => {
   return map[lang] || "English";
 };
 
-// Helper to convert file to Base64
-const fileToPart = async (file: File) => {
-  return new Promise<{ inlineData: { data: string; mimeType: string } }>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      // Remove data url prefix (e.g. "data:image/jpeg;base64,")
-      const base64Data = result.split(',')[1];
-      resolve({
-        inlineData: {
-          data: base64Data,
-          mimeType: file.type,
-        },
-      });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-};
-
 // PCM Decoding for TTS
 function decode(base64: string) {
   const binaryString = atob(base64);
@@ -79,12 +59,10 @@ export async function pcmToAudioBuffer(
 
 export const analyzeContent = async (
   text: string, 
-  file: File | null, 
-  url: string | null = null,
   language: Language = 'en'
 ): Promise<FullAnalysisResponse> => {
-  if ((!text || text.trim().length === 0) && !file && !url) {
-    throw new Error("Please enter text, a URL, or upload media to analyze.");
+  if (!text || text.trim().length === 0) {
+    throw new Error("Please enter text to analyze.");
   }
 
   const languageInstruction = getLanguageName(language);
@@ -95,7 +73,6 @@ export const analyzeContent = async (
     
     Context:
     Text: "${text}"
-    URL: "${url || 'None'}"
 
     Instructions:
     1. Use googleSearch to verify.
@@ -108,19 +85,10 @@ export const analyzeContent = async (
        - keyPoints: Array of max 3 short bullet points.
   `;
 
-  const parts: any[] = [];
-  
-  if (file) {
-    const mediaPart = await fileToPart(file);
-    parts.push(mediaPart);
-  }
-  
-  parts.push({ text: promptText });
-
   try {
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: parts, // Pass array of parts (text + optional media)
+      contents: promptText,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
@@ -170,6 +138,9 @@ export const analyzeContent = async (
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
+    if (error.status === 429 || error.code === 429) {
+         throw new Error("Quota exceeded. Please try again later.");
+    }
     throw new Error(error.message || "Failed to analyze content. Please try again.");
   }
 };
