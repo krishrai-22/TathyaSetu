@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { InputForm } from './components/InputForm';
 import { ResultCard } from './components/ResultCard';
 import { MethodologyModal } from './components/MethodologyModal';
-import { NewsSection } from './components/NewsSection';
 import { analyzeContent } from './services/gemini';
 import { FullAnalysisResponse, Language } from './types';
 import { translations } from './translations';
@@ -51,13 +50,6 @@ const App: React.FC = () => {
     }
   };
 
-  const scrollToNews = () => {
-    const newsElement = document.getElementById('news');
-    if (newsElement) {
-      newsElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-100 selection:text-indigo-900 pb-20 relative transition-colors duration-300">
       
@@ -77,7 +69,6 @@ const App: React.FC = () => {
 
           {/* Nav - Hidden on mobile, shown on md+ */}
           <nav className="hidden md:flex items-center gap-8">
-            <button onClick={scrollToNews} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.news}</button>
             <button onClick={() => setShowMethodology(true)} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{t.aboutMethodology}</button>
           </nav>
 
@@ -173,9 +164,6 @@ const App: React.FC = () => {
 
         {/* Results */}
         {result && <ResultCard data={result} t={t} currentLanguage={language} />}
-
-        {/* News Section */}
-        <NewsSection language={language} t={t} />
 
       </main>
 
