@@ -22,8 +22,14 @@ const copyExtensionAssets = () => {
       if (fs.existsSync(manifestPath)) {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
         
-        // Update paths to match the flattened build output
-        manifest.action.default_popup = 'popup.html';
+        // DYNAMIC FIX: Check if Vite output popup.html in 'extension/' folder or root
+        if (fs.existsSync(resolve(distDir, 'extension', 'popup.html'))) {
+          manifest.action.default_popup = 'extension/popup.html';
+        } else {
+          manifest.action.default_popup = 'popup.html';
+        }
+
+        // Background script is usually flattened by Rollup to root
         manifest.background.service_worker = 'background.js';
         
         fs.writeFileSync(
@@ -32,8 +38,18 @@ const copyExtensionAssets = () => {
         );
       }
 
-      // 2. Copy Icons (if you have them in public/icons or extension/icons)
-      // For this example, we assume icons might exist in public/icons, Vite copies public folder by default.
+      // 2. Copy Icons to dist (checks public/icons)
+      const srcIconsDir = resolve(__dirname, 'public/icons');
+      const destIconsDir = resolve(distDir, 'icons');
+      
+      if (fs.existsSync(srcIconsDir)) {
+         if (!fs.existsSync(destIconsDir)) {
+            fs.mkdirSync(destIconsDir, { recursive: true });
+         }
+         fs.readdirSync(srcIconsDir).forEach(file => {
+            fs.copyFileSync(resolve(srcIconsDir, file), resolve(destIconsDir, file));
+         });
+      }
     }
   }
 }
