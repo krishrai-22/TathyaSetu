@@ -114,16 +114,11 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
                   </span>
                 </div>
                 
-                <a 
-                  href={item.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="block mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
-                >
+                <div className="block mb-3">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2">
                     {item.title}
                   </h3>
-                </a>
+                </div>
                 
                 <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-4 flex-1">
                   {item.snippet}

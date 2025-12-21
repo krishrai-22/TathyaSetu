@@ -164,6 +164,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               <div className="text-center space-y-2">
                 <Upload className="w-8 h-8 mx-auto text-slate-400" />
                 <p className="text-sm text-slate-500">{t.uploadTooltip} <span className="text-xs opacity-70">({t.supports})</span></p>
+                <p className="text-xs text-slate-400 opacity-80">{t.sizeLimit}</p>
               </div>
             )}
           </div>
@@ -219,6 +220,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                 </button>
               )}
             </div>
+            <p className="text-xs text-slate-400 mt-2 text-center">{t.urlDisclaimer}</p>
             {url && !url.match(/^https?:\/\/.+\..+/) && (
               <p className="text-red-500 text-xs mt-2 pl-2">{t.invalidUrl}</p>
             )}
