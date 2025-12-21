@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Newspaper, ExternalLink, RefreshCw, AlertCircle, Clock } from 'lucide-react';
+import { Newspaper, RefreshCw, AlertCircle, Clock } from 'lucide-react';
 import { fetchTrendingNews } from '../services/gemini';
 import { NewsItem, Language } from '../types';
 import { TranslationSchema } from '../translations';
@@ -114,23 +114,20 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
                   </span>
                 </div>
                 
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  {item.title}
-                </h3>
+                <a 
+                  href={item.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="block mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
+                >
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2">
+                    {item.title}
+                  </h3>
+                </a>
                 
-                <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 line-clamp-3 flex-1">
+                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-4 flex-1">
                   {item.snippet}
                 </p>
-                
-                <a 
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-auto inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                >
-                  {t.readMore}
-                  <ExternalLink className="w-4 h-4" />
-                </a>
               </div>
             </article>
           ))}
