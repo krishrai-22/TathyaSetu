@@ -47,3 +47,11 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
 }
+
+export interface NewsItem {
+  title: string;
+  snippet: string;
+  source: string;
+  url: string;
+  publishedTime: string;
+}

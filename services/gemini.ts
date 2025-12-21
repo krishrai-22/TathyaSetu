@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat, Modality } from "@google/genai";
-import { AnalysisResult, FullAnalysisResponse, GroundingSource, VerdictType, Language } from "../types";
+import { AnalysisResult, FullAnalysisResponse, GroundingSource, VerdictType, Language, NewsItem } from "../types";
 
 // Initialize the API client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -173,6 +173,55 @@ export const analyzeContent = async (
          throw new Error("Quota exceeded (429). The free tier limit has been reached. Please try again in a few minutes.");
     }
     throw new Error(error.message || "Failed to analyze content. Please try again.");
+  }
+};
+
+export const fetchTrendingNews = async (
+  language: Language, 
+  category: string = 'Trending',
+  count: number = 4
+): Promise<NewsItem[]> => {
+  let region = "Global";
+  if (language !== 'en') {
+    region = "India";
+  } else if (category === 'India') {
+    region = "India";
+  }
+  
+  const langName = getLanguageName(language);
+  
+  // Extremely streamlined prompt for speed
+  const prompt = `
+    Find ${count} "news.google.com" links for "${category}" news in ${region}.
+    Prefer articles in ${langName} if available, otherwise English.
+    
+    JSON Output:
+    [{"title": "Str", "snippet": "Short str", "source": "Publisher", "url": "https://news.google.com/...", "publishedTime": "Str"}]
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+      }
+    });
+
+    if (response.text) {
+      const items = JSON.parse(response.text) as NewsItem[];
+      return items.map(item => ({
+        ...item,
+        url: item.url?.includes('news.google.com') 
+             ? item.url 
+             : `https://news.google.com/search?q=${encodeURIComponent(item.title)}`
+      }));
+    }
+    return [];
+  } catch (e) {
+    console.error("Failed to fetch news", e);
+    return [];
   }
 };
 
