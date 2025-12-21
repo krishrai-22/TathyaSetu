@@ -190,8 +190,14 @@ export const fetchTrendingNews = async (
   
   const langName = getLanguageName(language);
   
-  // Simplified prompt for faster generation
-  const prompt = `Get ${count} latest news headlines for "${category}" in ${region}. Language: ${langName}.`;
+  // Reverted to original specific prompt
+  const prompt = `
+    Find ${count} "news.google.com" links for "${category}" news in ${region}.
+    Prefer articles in ${langName} if available, otherwise English.
+    
+    JSON Output:
+    [{"title": "Str", "snippet": "Short str", "source": "Publisher", "url": "https://news.google.com/...", "publishedTime": "Str"}]
+  `;
 
   try {
     const response = await ai.models.generateContent({
@@ -200,20 +206,6 @@ export const fetchTrendingNews = async (
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              snippet: { type: Type.STRING },
-              source: { type: Type.STRING },
-              url: { type: Type.STRING },
-              publishedTime: { type: Type.STRING }
-            },
-            required: ["title", "source", "url", "publishedTime"]
-          }
-        }
       }
     });
 
@@ -221,12 +213,9 @@ export const fetchTrendingNews = async (
       const items = JSON.parse(response.text) as NewsItem[];
       return items.map(item => ({
         ...item,
-        // Fallback for empty snippets
-        snippet: item.snippet || item.title,
-        // Ensure valid URL
-        url: (item.url && item.url.startsWith('http')) 
+        url: item.url?.includes('news.google.com') 
              ? item.url 
-             : `https://www.google.com/search?q=${encodeURIComponent(item.title + " news")}`
+             : `https://news.google.com/search?q=${encodeURIComponent(item.title)}`
       }));
     }
     return [];
