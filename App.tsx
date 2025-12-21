@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { InputForm } from './components/InputForm';
 import { ResultCard } from './components/ResultCard';
 import { MethodologyModal } from './components/MethodologyModal';
+import { PromoSection } from './components/PromoSection';
 import { analyzeContent } from './services/gemini';
 import { FullAnalysisResponse, Language } from './types';
 import { translations } from './translations';
@@ -164,6 +165,9 @@ const App: React.FC = () => {
 
         {/* Results */}
         {result && <ResultCard data={result} t={t} currentLanguage={language} />}
+        
+        {/* Promotional Section (WhatsApp Bot & Extension) */}
+        <PromoSection language={language} t={t} />
 
       </main>
 
