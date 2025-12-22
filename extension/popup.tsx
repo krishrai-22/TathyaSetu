@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { PopupApp } from './PopupApp';
+// Import main CSS to ensure Tailwind styles are bundled locally
+import '../index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

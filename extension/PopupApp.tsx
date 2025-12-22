@@ -4,7 +4,7 @@ import { ResultCard } from '../components/ResultCard';
 import { analyzeContent } from '../services/gemini';
 import { FullAnalysisResponse, Language } from '../types';
 import { translations } from '../translations';
-import { Globe, Moon, Sun, ArrowLeft } from 'lucide-react';
+import { Globe, Moon, Sun, ArrowLeft, Info } from 'lucide-react';
 
 declare const chrome: any;
 
@@ -69,7 +69,7 @@ export const PopupApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-8 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-8 transition-colors w-[400px]">
       
       {/* Compact Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-sm">
@@ -114,8 +114,23 @@ export const PopupApp: React.FC = () => {
         {!result ? (
           <div className="animate-fade-in">
             {initialText && (
-               <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg text-xs text-indigo-700 dark:text-indigo-300">
-                  Text pasted from right-click selection. Press Verify.
+               <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg flex gap-2 items-start">
+                  <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-indigo-700 dark:text-indigo-300">
+                    <span className="font-semibold">Ready to verify!</span><br/>
+                    Text pasted from your selection. Press "Verify" below.
+                  </div>
+               </div>
+            )}
+            
+            {!initialText && (
+               <div className="mb-6 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-center">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                    <strong>Tip:</strong> You can select text on any website, Right Click, and choose "Verify with TathyaSetu".
+                  </p>
+                  <div className="text-[10px] text-slate-400">
+                    (You must click this icon to see results)
+                  </div>
                </div>
             )}
 
@@ -150,12 +165,12 @@ export const PopupApp: React.FC = () => {
       <style>{`
         /* CSS Overrides to make InputForm fit in popup */
         #analyzer textarea {
-           height: 120px;
-           font-size: 14px;
+           height: 100px;
+           font-size: 13px;
         }
         #analyzer button {
-           padding-top: 8px;
-           padding-bottom: 8px;
+           padding-top: 6px;
+           padding-bottom: 6px;
         }
       `}</style>
     </div>

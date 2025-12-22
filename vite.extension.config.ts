@@ -61,6 +61,8 @@ export default defineConfig(({ mode }) => {
       react(),
       copyExtensionAssets()
     ],
+    // IMPORTANT: Base must be relative for extensions to load assets correctly
+    base: './', 
     define: {
       'process.env.API_KEY': JSON.stringify(env.API_KEY)
     },
@@ -75,7 +77,10 @@ export default defineConfig(({ mode }) => {
         output: {
           entryFileNames: '[name].js',
           chunkFileNames: '[name].js',
-          assetFileNames: '[name].[ext]'
+          assetFileNames: '[name].[ext]',
+          manualChunks: {
+             vendor: ['react', 'react-dom', '@google/genai', 'lucide-react'],
+          }
         }
       }
     }

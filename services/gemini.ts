@@ -1,9 +1,6 @@
 import { GoogleGenAI, Type, Chat, Modality } from "@google/genai";
 import { AnalysisResult, FullAnalysisResponse, GroundingSource, VerdictType, Language, NewsItem } from "../types";
 
-// Initialize the API client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 // Switch to Flash model for faster (<5s) response times
 const modelId = "gemini-3-flash-preview";
 
@@ -118,6 +115,9 @@ export const analyzeContent = async (
   }
 
   try {
+    // Initialize inside function to avoid startup crash if key is missing
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
     const response = await ai.models.generateContent({
       model: modelId,
       contents: { parts: contentParts },
@@ -190,7 +190,6 @@ export const fetchTrendingNews = async (
   
   const langName = getLanguageName(language);
   
-  // Reverted to original specific prompt
   const prompt = `
     Find ${count} "news.google.com" links for "${category}" news in ${region}.
     Prefer articles in ${langName} if available, otherwise English.
@@ -200,6 +199,8 @@ export const fetchTrendingNews = async (
   `;
 
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
@@ -239,6 +240,8 @@ export const createChatSession = (language: Language = 'en', context?: AnalysisR
     `;
   }
 
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
   return ai.chats.create({
     model: "gemini-3-flash-preview",
     config: {
@@ -252,6 +255,8 @@ export const streamAudio = async function* (text: string, language: Language = '
   const voiceName = 'Puck';
 
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
     const response = await ai.models.generateContent({
       model: ttsModel,
       contents: { parts: [{ text }] },
@@ -286,6 +291,8 @@ export const translateAnalysis = async (
     Translate values to ${targetLangName}. Maintain JSON structure.
     JSON: ${JSON.stringify(result)}
   `;
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const response = await ai.models.generateContent({
     model: modelId,
