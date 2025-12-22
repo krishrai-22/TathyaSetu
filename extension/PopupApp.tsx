@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { InputForm } from '../components/InputForm';
-import { ResultCard } from '../components/ResultCard';
 import { analyzeContent } from '../services/gemini';
-import { FullAnalysisResponse, Language } from '../types';
-import { translations } from '../translations';
-import { Globe, Moon, Sun, ArrowLeft, Info } from 'lucide-react';
+import { FullAnalysisResponse, VerdictType } from '../types';
+import { CheckCircle2, XCircle, AlertTriangle, HelpCircle, Quote, Search, RotateCcw, Loader2, Info } from 'lucide-react';
 
 declare const chrome: any;
 
@@ -12,13 +9,25 @@ export const PopupApp: React.FC = () => {
   const [result, setResult] = useState<FullAnalysisResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [language, setLanguage] = useState<Language>('en');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [initialText, setInitialText] = useState('');
+  const [inputText, setInputText] = useState('');
 
-  const t = translations[language];
+  const triggerAnalysis = async (text: string) => {
+    if (!text.trim()) return;
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+    
+    try {
+      const data = await analyzeContent(text, 'en');
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Notify background that popup is open to clear badge
+  // Notify background that popup is open to clear badge and check for pending text
   useEffect(() => {
     try {
       if (typeof chrome !== 'undefined' && chrome?.runtime) {
@@ -27,7 +36,11 @@ export const PopupApp: React.FC = () => {
         // Check for selected text from context menu
         chrome.storage.local.get(['pending_verification'], (data: any) => {
           if (data.pending_verification) {
-            setInitialText(data.pending_verification);
+            const pendingText = data.pending_verification;
+            setInputText(pendingText);
+            
+            // Auto-trigger analysis immediately
+            triggerAnalysis(pendingText);
             
             // Clear storage so it doesn't persist forever
             chrome.storage.local.remove('pending_verification');
@@ -39,140 +52,136 @@ export const PopupApp: React.FC = () => {
     }
   }, []);
 
-  // Handle Dark Mode
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
-  const handleAnalyze = async (content: string | File | { type: 'url'; value: string }) => {
-    setIsLoading(true);
-    setError(null);
-    setResult(null);
-    
-    try {
-      const data = await analyzeContent(content, language);
-      setResult(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleManualVerify = () => {
+    triggerAnalysis(inputText);
   };
 
-  const handleReset = () => {
-    setResult(null);
-    setError(null);
+  const getVerdictUI = (verdict: VerdictType) => {
+    switch (verdict) {
+      case VerdictType.TRUE:
+        return {
+          label: "True / Accurate",
+          icon: <CheckCircle2 className="w-16 h-16 text-green-500 mb-2" />,
+          color: "text-green-600 bg-green-50 border-green-200"
+        };
+      case VerdictType.FALSE:
+        return {
+          label: "False / Misinformation",
+          icon: <XCircle className="w-16 h-16 text-red-500 mb-2" />,
+          color: "text-red-600 bg-red-50 border-red-200"
+        };
+      case VerdictType.MISLEADING:
+        return {
+          label: "Misleading",
+          icon: <AlertTriangle className="w-16 h-16 text-orange-500 mb-2" />,
+          color: "text-orange-600 bg-orange-50 border-orange-200"
+        };
+      case VerdictType.SATIRE:
+        return {
+          label: "Satire",
+          icon: <Quote className="w-16 h-16 text-purple-500 mb-2" />,
+          color: "text-purple-600 bg-purple-50 border-purple-200"
+        };
+      default:
+        return {
+          label: "Unverified",
+          icon: <HelpCircle className="w-16 h-16 text-slate-500 mb-2" />,
+          color: "text-slate-600 bg-slate-50 border-slate-200"
+        };
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-8 transition-colors w-[400px]">
+    <div className="w-[350px] min-h-[400px] bg-white text-slate-900 font-sans flex flex-col relative overflow-hidden">
       
-      {/* Compact Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2">
-            {result ? (
-               <button onClick={handleReset} className="p-1 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                 <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-               </button>
-            ) : null}
-            <h1 className="text-lg font-bold text-slate-900 dark:text-white">{t.appTitle}</h1>
-        </div>
+      {/* Simple Header */}
+      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+        <h1 className="font-bold text-lg tracking-tight text-indigo-600">TathyaSetu</h1>
+        {result && (
+           <button 
+             onClick={() => setResult(null)} 
+             className="text-slate-400 hover:text-indigo-600 transition-colors p-1"
+             title="Check another"
+           >
+             <RotateCcw className="w-5 h-5" />
+           </button>
+        )}
+      </div>
 
-        <div className="flex items-center gap-2">
-           <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-1.5 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as Language)}
-                className="bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 py-1.5 pl-2 pr-1 rounded-md border-none focus:ring-0 cursor-pointer max-w-[80px]"
-            >
-                <option value="en">EN</option>
-                <option value="hi">HI</option>
-                <option value="hinglish">HIN</option>
-                <option value="bn">BN</option>
-                <option value="te">TE</option>
-                <option value="mr">MR</option>
-                <option value="ta">TA</option>
-                <option value="gu">GU</option>
-                <option value="kn">KN</option>
-                <option value="ml">ML</option>
-                <option value="pa">PA</option>
-                <option value="ur">UR</option>
-            </select>
-        </div>
-      </header>
-
-      <main className="p-4">
-        {!result ? (
-          <div className="animate-fade-in">
-            {initialText && (
-               <div className="mb-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg flex gap-2 items-start">
-                  <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                  <div className="text-xs text-indigo-700 dark:text-indigo-300">
-                    <span className="font-semibold">Ready to verify!</span><br/>
-                    Text pasted from your selection. Press "Verify" below.
-                  </div>
-               </div>
-            )}
+      <main className="flex-1 p-5 flex flex-col">
+        
+        {isLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center space-y-4 animate-fade-in">
+             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+             <p className="text-sm font-medium text-slate-500 animate-pulse">Verifying facts...</p>
+          </div>
+        ) : result ? (
+          // Result View
+          <div className="flex-1 flex flex-col items-center text-center animate-slide-up">
             
-            {!initialText && (
-               <div className="mb-6 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-center">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    <strong>Tip:</strong> You can select text on any website, Right Click, and choose "Verify with TathyaSetu".
-                  </p>
-                  <div className="text-[10px] text-slate-400">
-                    (You must click this icon to see results)
-                  </div>
-               </div>
-            )}
+            <div className="mt-4 mb-6">
+                {getVerdictUI(result.result.verdict).icon}
+                <h2 className={`text-2xl font-bold ${getVerdictUI(result.result.verdict).color.split(' ')[0]}`}>
+                  {getVerdictUI(result.result.verdict).label}
+                </h2>
+                <div className="mt-2 inline-block px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+                   Confidence: {result.result.confidence}%
+                </div>
+            </div>
 
-            <div className="popup-input-wrapper">
-                 <InputForm 
-                    onAnalyze={handleAnalyze} 
-                    isLoading={isLoading} 
-                    t={t}
-                    initialValue={initialText}
-                />
+            <div className={`p-4 rounded-xl border ${getVerdictUI(result.result.verdict).color} mb-4 w-full`}>
+               <p className="text-sm font-medium leading-relaxed">
+                 {result.result.summary}
+               </p>
             </div>
             
-            {isLoading && (
-               <div className="mt-8 text-center text-sm text-slate-500 animate-pulse">
-                  {t.loadingMessage}
-               </div>
+            <div className="text-xs text-slate-400 mt-auto">
+               Verified against {result.sources.length} sources via Google.
+            </div>
+
+          </div>
+        ) : (
+          // Input View
+          <div className="flex-1 flex flex-col animate-fade-in">
+            
+            {inputText ? (
+                <div className="mb-3 flex gap-2 p-3 bg-indigo-50 text-indigo-700 text-xs rounded-lg border border-indigo-100">
+                    <Info className="w-4 h-4 shrink-0" />
+                    <span>Text captured from page.</span>
+                </div>
+            ) : (
+                <p className="text-sm text-slate-500 mb-3">
+                   Paste text below or select text on a webpage and right-click to verify.
+                </p>
             )}
 
+            <textarea
+              className="flex-1 w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none mb-4 text-slate-700 placeholder:text-slate-400"
+              placeholder="Paste claim here..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+            />
+
             {error && (
-              <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg text-red-600 dark:text-red-400 text-xs text-center">
+              <div className="mb-4 text-xs text-red-500 bg-red-50 p-2 rounded border border-red-100 text-center">
                 {error}
               </div>
             )}
-          </div>
-        ) : (
-          <div className="animate-slide-up">
-            <ResultCard data={result} t={t} currentLanguage={language} />
+
+            <button
+              onClick={handleManualVerify}
+              disabled={!inputText.trim()}
+              className={`
+                w-full py-3 rounded-xl font-semibold text-white shadow-sm flex items-center justify-center gap-2 transition-all
+                ${!inputText.trim() ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95'}
+              `}
+            >
+              <Search className="w-4 h-4" />
+              Verify
+            </button>
           </div>
         )}
       </main>
-
-      <style>{`
-        /* CSS Overrides to make InputForm fit in popup */
-        #analyzer textarea {
-           height: 100px;
-           font-size: 13px;
-        }
-        #analyzer button {
-           padding-top: 6px;
-           padding-bottom: 6px;
-        }
-      `}</style>
     </div>
   );
 };

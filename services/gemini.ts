@@ -115,8 +115,22 @@ export const analyzeContent = async (
   }
 
   try {
-    // Initialize inside function to avoid startup crash if key is missing
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY || '';
+    
+    if (!apiKey || apiKey.trim() === '') {
+       throw new Error("API Key is missing. Create a .env file with API_KEY=... and rebuild.");
+    }
+
+    let ai;
+    try {
+      ai = new GoogleGenAI({ apiKey });
+    } catch (e: any) {
+      // Catch specific SDK error if key is invalid/empty in a way that bypassed check
+      if (e.message?.includes("API Key")) {
+        throw new Error("Invalid API Key configuration. Check .env and rebuild.");
+      }
+      throw e;
+    }
 
     const response = await ai.models.generateContent({
       model: modelId,
@@ -170,9 +184,13 @@ export const analyzeContent = async (
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     if (error.status === 429 || error.code === 429 || error.message?.includes('429')) {
-         throw new Error("Quota exceeded (429). The free tier limit has been reached. Please try again in a few minutes.");
+         throw new Error("Quota exceeded. Please try again later.");
     }
-    throw new Error(error.message || "Failed to analyze content. Please try again.");
+    // Pass through the clean message if it's our own error
+    if (error.message && (error.message.includes("API Key") || error.message.includes("Quota"))) {
+        throw error;
+    }
+    throw new Error(error.message || "Failed to analyze content.");
   }
 };
 
@@ -199,7 +217,10 @@ export const fetchTrendingNews = async (
   `;
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) return [];
+
+    const ai = new GoogleGenAI({ apiKey });
     
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -227,6 +248,9 @@ export const fetchTrendingNews = async (
 };
 
 export const createChatSession = (language: Language = 'en', context?: AnalysisResult): Chat => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) throw new Error("API Key missing");
+
   const langName = getLanguageName(language);
   let instruction = `You are a friendly and expert AI assistant specializing in media literacy. Reply in ${langName}.`;
   
@@ -240,7 +264,7 @@ export const createChatSession = (language: Language = 'en', context?: AnalysisR
     `;
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   return ai.chats.create({
     model: "gemini-3-flash-preview",
@@ -255,7 +279,9 @@ export const streamAudio = async function* (text: string, language: Language = '
   const voiceName = 'Puck';
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) throw new Error("API Key missing");
+    const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
       model: ttsModel,
@@ -291,8 +317,11 @@ export const translateAnalysis = async (
     Translate values to ${targetLangName}. Maintain JSON structure.
     JSON: ${JSON.stringify(result)}
   `;
+  
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) throw new Error("API Key missing");
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
     model: modelId,

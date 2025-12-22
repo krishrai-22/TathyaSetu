@@ -55,7 +55,15 @@ const copyExtensionAssets = () => {
 }
 
 export default defineConfig(({ mode }) => {
+  // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, (process as any).cwd(), '');
+
+  // Warn if API key is missing at build time
+  if (!env.API_KEY) {
+    console.warn("\x1b[33m%s\x1b[0m", "⚠️  WARNING: API_KEY is missing in your .env file!");
+    console.warn("The extension will build, but will fail at runtime.");
+  }
+
   return {
     plugins: [
       react(),
@@ -64,7 +72,8 @@ export default defineConfig(({ mode }) => {
     // IMPORTANT: Base must be relative for extensions to load assets correctly
     base: './', 
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      // Use fallback empty string to prevent build crashes, handled in services/gemini.ts
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || '')
     },
     build: {
       outDir: 'dist-extension',
