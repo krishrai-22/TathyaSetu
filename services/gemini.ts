@@ -84,7 +84,7 @@ export const analyzeContent = async (
   let promptText = `
     Analyze for misinformation. Output JSON in ${languageInstruction}.
     Instructions:
-    1. Use googleSearch to verify. FIND AND CITE AT LEAST 5-10 DISTINCT SOURCES.
+    1. Use googleSearch to verify.
     2. Be EXTREMELY CONCISE.
     3. Output Schema:
        - verdict: TRUE/FALSE/MISLEADING/UNVERIFIED/SATIRE
@@ -138,7 +138,6 @@ export const analyzeContent = async (
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -229,7 +228,6 @@ export const fetchTrendingNews = async (
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency
       }
     });
 
@@ -272,7 +270,6 @@ export const createChatSession = (language: Language = 'en', context?: AnalysisR
     model: "gemini-3-flash-preview",
     config: {
       systemInstruction: instruction + contextPrompt,
-      thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency in chat
     }
   });
 };
@@ -286,8 +283,7 @@ export const streamAudio = async function* (text: string, language: Language = '
     if (!apiKey) throw new Error("API Key missing");
     const ai = new GoogleGenAI({ apiKey });
 
-    // Use generateContentStream for significantly faster start time (TTFB)
-    const responseStream = await ai.models.generateContentStream({
+    const response = await ai.models.generateContent({
       model: ttsModel,
       contents: { parts: [{ text }] },
       config: {
@@ -300,15 +296,9 @@ export const streamAudio = async function* (text: string, language: Language = '
       }
     });
 
-    for await (const chunk of responseStream) {
-        const parts = chunk.candidates?.[0]?.content?.parts;
-        if (parts) {
-            for (const part of parts) {
-                if (part.inlineData?.data) {
-                    yield decode(part.inlineData.data);
-                }
-            }
-        }
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (base64Audio) {
+      yield decode(base64Audio);
     }
   } catch (e) {
     console.error("Gemini TTS Generation Error", e);
@@ -338,7 +328,6 @@ export const translateAnalysis = async (
     contents: prompt,
     config: {
       responseMimeType: "application/json",
-      thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency
       responseSchema: {
           type: Type.OBJECT,
           properties: {
