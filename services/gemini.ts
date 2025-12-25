@@ -138,6 +138,7 @@ export const analyzeContent = async (
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
+        thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -228,6 +229,7 @@ export const fetchTrendingNews = async (
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
+        thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency
       }
     });
 
@@ -270,6 +272,7 @@ export const createChatSession = (language: Language = 'en', context?: AnalysisR
     model: "gemini-3-flash-preview",
     config: {
       systemInstruction: instruction + contextPrompt,
+      thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency in chat
     }
   });
 };
@@ -328,6 +331,7 @@ export const translateAnalysis = async (
     contents: prompt,
     config: {
       responseMimeType: "application/json",
+      thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for lowest latency
       responseSchema: {
           type: Type.OBJECT,
           properties: {

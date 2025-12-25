@@ -124,7 +124,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         return (
           <div className="relative">
             <textarea
-                className="w-full h-40 p-6 text-lg text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-transparent border-none focus:ring-0 resize-none outline-none leading-relaxed selection:bg-indigo-100 dark:selection:bg-indigo-900/40"
+                className="w-full h-40 p-6 text-lg text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-transparent border-none focus:ring-0 resize-none outline-none leading-relaxed"
                 placeholder={t.inputPlaceholder}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -153,12 +153,12 @@ export const InputForm: React.FC<InputFormProps> = ({
             onDrop={handleDrop}
           >
             {file ? (
-              <div className="relative group w-full h-full flex items-center justify-center animate-scale-in">
+              <div className="relative group w-full h-full flex items-center justify-center">
                 {file.type.startsWith('image/') ? (
                   <img src={URL.createObjectURL(file)} alt="Preview" className="h-full object-contain rounded shadow-sm" />
                 ) : (
                   <div className="text-center">
-                    <FileVideo className="w-12 h-12 mx-auto text-indigo-500 mb-2 animate-bounce" />
+                    <FileVideo className="w-12 h-12 mx-auto text-indigo-500 mb-2" />
                     <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">{file.name}</span>
                   </div>
                 )}
@@ -171,7 +171,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               </div>
             ) : (
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2">
                      <Upload className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                 </div>
                 <div>
@@ -184,9 +184,9 @@ export const InputForm: React.FC<InputFormProps> = ({
         );
       case 'audio':
         return (
-          <div className="h-40 flex flex-col items-center justify-center space-y-6 animate-fade-in">
+          <div className="h-40 flex flex-col items-center justify-center space-y-6">
             {file ? (
-               <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-scale-in">
+               <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                  <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
                     <FileAudio className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                  </div>
@@ -205,7 +205,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                     onClick={isRecording ? stopRecording : startRecording}
                     className={`
                     w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 relative
-                    ${isRecording ? 'bg-red-500 scale-110 shadow-lg shadow-red-500/40' : 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:shadow-xl hover:scale-105'}
+                    ${isRecording ? 'bg-red-500 scale-110 shadow-lg shadow-red-500/40' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-xl'}
                     `}
                 >
                     {isRecording && <span className="absolute inset-0 rounded-full border-[3px] border-white/30 animate-ping"></span>}
@@ -220,7 +220,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         );
       case 'url':
         return (
-          <div className="h-40 flex flex-col justify-center p-6 animate-fade-in">
+          <div className="h-40 flex flex-col justify-center p-6">
             <div className="group flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
               <div className="p-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
                  <Link className="w-5 h-5 text-indigo-500" />
@@ -240,7 +240,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               )}
             </div>
             {url && !url.match(/^https?:\/\/.+\..+/) && (
-              <p className="text-red-500 text-xs mt-3 pl-2 flex items-center gap-1 animate-slide-down">
+              <p className="text-red-500 text-xs mt-3 pl-2 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
                   {t.invalidUrl}
               </p>
@@ -262,7 +262,7 @@ export const InputForm: React.FC<InputFormProps> = ({
     <div id="analyzer" className="w-full max-w-3xl mx-auto space-y-6 scroll-mt-24">
       {/* Tabs */}
       <div className="flex justify-center">
-        <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-800 flex gap-1 relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex gap-1">
           {[
             { id: 'text', icon: Type, label: 'Text' },
             { id: 'image', icon: ImageIcon, label: 'Media' },
@@ -273,16 +273,13 @@ export const InputForm: React.FC<InputFormProps> = ({
               key={tab.id}
               onClick={() => { setActiveTab(tab.id as InputType); setFile(null); }}
               className={`
-                relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 outline-none
+                flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 outline-none
                 ${activeTab === tab.id 
-                  ? 'text-white shadow-md' 
+                  ? 'bg-indigo-600 text-white shadow-md' 
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}
               `}
             >
-              {activeTab === tab.id && (
-                <div className="absolute inset-0 bg-indigo-600 rounded-xl -z-10 animate-scale-in origin-center" style={{ animationDuration: '0.2s' }}></div>
-              )}
-              <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-white' : ''}`} />
+              <tab.icon className={`w-4 h-4`} />
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
@@ -290,15 +287,12 @@ export const InputForm: React.FC<InputFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="relative group">
-          {/* Animated Glow Background */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200 animate-shimmer bg-[length:200%_auto]"></div>
-          
-          <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-white/5 overflow-hidden transition-colors">
+        <div className="relative">
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
             
             {renderContent()}
 
-            <div className="flex items-center justify-between px-6 pb-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800/50 pt-4">
+            <div className="flex items-center justify-between px-6 pb-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 pt-4">
               <div className="text-xs text-slate-400 font-medium pl-1">
                 {activeTab === 'text' && text.length > 0 && (
                    <span className="flex items-center gap-1.5">
@@ -311,10 +305,10 @@ export const InputForm: React.FC<InputFormProps> = ({
                 type="submit"
                 disabled={getButtonDisabled()}
                 className={`
-                  flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-white transition-all transform duration-300
+                  flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-white transition-all transform
                   ${getButtonDisabled()
-                    ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed opacity-70' 
-                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0'}
+                    ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg active:scale-95'}
                 `}
               >
                 {isLoading ? (

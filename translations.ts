@@ -109,11 +109,14 @@ export interface TranslationSchema {
     trending: string;
     india: string;
     world: string;
+    politics: string;
     technology: string;
     business: string;
     science: string;
     health: string;
+    environment: string;
     sports: string;
+    entertainment: string;
   };
 }
 
@@ -125,7 +128,7 @@ const enTranslation: TranslationSchema = {
   more: "More",
   getStarted: "Get Started",
   heroTitle: "AI-Powered Fact Checker",
-  heroSubtitle: "Instantly verify text, audio, and images across Indian languages with real-time AI grounding.",
+  heroSubtitle: "Verify everything with every format and every Indian language.",
   inputPlaceholder: "Paste text here, or upload media to verify...",
   analyzing: "Analyzing...",
   verifyBtn: "Verify Facts",
@@ -232,11 +235,14 @@ const enTranslation: TranslationSchema = {
     trending: "Trending",
     india: "India",
     world: "World",
+    politics: "Politics",
     technology: "Technology",
     business: "Business",
     science: "Science",
     health: "Health",
-    sports: "Sports"
+    environment: "Environment",
+    sports: "Sports",
+    entertainment: "Entertainment"
   }
 };
 
@@ -249,7 +255,7 @@ export const translations: Record<Language, TranslationSchema> = {
     more: "अधिक",
     getStarted: "शुरू करें",
     heroTitle: "AI-संचालित फैक्ट चेकर",
-    heroSubtitle: "भारतीय भाषाओं में टेक्स्ट, ऑडियो और इमेज की तुरंत पुष्टि करें।",
+    heroSubtitle: "हर प्रारूप और हर भारतीय भाषा में सब कुछ सत्यापित करें।",
     inputPlaceholder: "सत्यापन के लिए यहाँ टेक्स्ट पेस्ट करें या मीडिया अपलोड करें...",
     analyzing: "विश्लेषण कर रहा है...",
     verifyBtn: "तथ्यों की पुष्टि करें",
@@ -294,7 +300,7 @@ export const translations: Record<Language, TranslationSchema> = {
     // Promo Section
     promoTitle: "WhatsApp और वेब एक्सटेंशन पर TathyaSetu आज़माएं",
     promoSubtitle: "अपने पसंदीदा प्लेटफॉर्म पर एआई-संचालित तथ्य जाँच का अनुभव करें। त्वरित सत्यापन के लिए हमारे व्हाट्सएप बॉट या ब्राउज़र एक्सटेंशन का उपयोग करें।",
-    promoWhatsappTitle: "WhatsApp बॉट",
+    promoWhatsappTitle: "व्हाट्सएप बॉट",
     promoWhatsappDesc: "त्वरित तथ्य जाँच और गलत सूचना का पता लगाने के लिए व्हाट्सएप पर TathyaSetu के साथ चैट करें।",
     promoExtensionTitle: "वेब एक्सटेंशन",
     promoExtensionDesc: "लेखों और सामाजिक पोस्टों को तुरंत सत्यापित करने के लिए TathyaSetu ब्राउज़र एक्सटेंशन का उपयोग करें।",
@@ -320,11 +326,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ट्रेंडिंग",
       india: "भारत",
       world: "विश्व",
+      politics: "राजनीति",
       technology: "प्रौद्योगिकी",
       business: "व्यापार",
       science: "विज्ञान",
       health: "स्वास्थ्य",
-      sports: "खेल"
+      environment: "पर्यावरण",
+      sports: "खेल",
+      entertainment: "मनोरंजन"
     }
   },
   hinglish: {
@@ -334,7 +343,7 @@ export const translations: Record<Language, TranslationSchema> = {
     more: "More",
     getStarted: "Shuru Karein",
     heroTitle: "AI-Powered Fact Checker",
-    heroSubtitle: "Text, audio, aur images ko instant verify karein AI grounding ke saath.",
+    heroSubtitle: "Har format aur har Indian language mein sab kuch verify karein.",
     inputPlaceholder: "Yahan text paste karein ya media upload karein verify karne ke liye...",
     analyzing: "Analyze kar raha hai...",
     verifyBtn: "Facts Check Karein",
@@ -403,11 +412,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "Trending",
       india: "India",
       world: "World",
+      politics: "Politics",
       technology: "Technology",
       business: "Business",
       science: "Science",
       health: "Health",
-      sports: "Sports"
+      environment: "Environment",
+      sports: "Sports",
+      entertainment: "Entertainment"
     }
   },
   // --- NEW LANGUAGES ---
@@ -487,11 +499,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ট্রেন্ডिंग",
       india: "ভারত",
       world: "বিশ্ব",
+      politics: "রাজনীতি",
       technology: "প্রযুক্তি",
       business: "ব্যবসা",
       science: "বিজ্ঞান",
       health: "স্বাস্থ্য",
-      sports: "খেলাধুলা"
+      environment: "পরিবেশ",
+      sports: "খেলাধুলা",
+      entertainment: "বিনোদন"
     }
   },
   te: {
@@ -570,11 +585,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ట్రెండింగ్",
       india: "భారతదేశం",
       world: "ప్రపంచం",
+      politics: "రాజకీయాలు",
       technology: "సాంకేతికత",
       business: "వ్యాపారం",
       science: "సైన్స్",
       health: "ఆరోగ్యం",
-      sports: "క్రీడలు"
+      environment: "పర్యావరణం",
+      sports: "క్రీడలు",
+      entertainment: "వినోదం"
     }
   },
   ta: {
@@ -653,11 +671,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ட்ரெண்டிங்",
       india: "இந்தியா",
       world: "உலகம்",
+      politics: "அரசியல்",
       technology: "தொழில்நுட்பம்",
       business: "வணிகம்",
       science: "அறிவியல்",
       health: "சுகாதாரம்",
-      sports: "விளையாட்டு"
+      environment: "சுற்றுச்சூழல்",
+      sports: "விளையாட்டு",
+      entertainment: "பொழுதுபோக்கு"
     }
   },
   mr: {
@@ -697,7 +718,7 @@ export const translations: Record<Language, TranslationSchema> = {
     chatContextIntro: "मी या विश्लेषणाबद्दल प्रश्नांची उत्तरे देऊ शकतो.",
     chatPlaceholder: "अधिक विचारा...",
     translating: "भाषांतर होत आहे...",
-    generatingAudio: "ऑडियो तयार होत आहे...",
+    generatingAudio: "ऑडिओ तयार होत आहे...",
     urlTooltip: "लिंक जोडा",
     pasteUrl: "URL पेस्ट करा...",
     invalidUrl: "वैध URL प्रविष्ट करा",
@@ -736,11 +757,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ट्रेंडिंग",
       india: "भारत",
       world: "जग",
+      politics: "राजकारण",
       technology: "तंत्रज्ञान",
       business: "व्यवसाय",
       science: "विज्ञान",
       health: "आरोग्य",
-      sports: "क्रीडा"
+      environment: "पर्यावरण",
+      sports: "क्रीडा",
+      entertainment: "मनोरंजन"
     }
   },
   gu: {
@@ -819,11 +843,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ટ્રેન્ડિંગ",
       india: "ભારત",
       world: "વિશ્વ",
+      politics: "રાજકારણ",
       technology: "ટેકનોલોજી",
       business: "બિઝનેસ",
       science: "વિજ્ઞાન",
       health: "સ્વાસ્થ્ય",
-      sports: "સ્પોર્ટ્સ"
+      environment: "પર્યાવરણ",
+      sports: "સ્પોર્ટ્સ",
+      entertainment: "મનોરંજન"
     }
   },
   kn: {
@@ -902,11 +929,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ಟ್ರೆಂಡಿಂಗ್",
       india: "ಭಾರತ",
       world: "ಪ್ರಪಂಚ",
+      politics: "ರಾಜಕೀಯ",
       technology: "ತಂತ್ರಜ್ಞಾನ",
       business: "ವ್ಯಾಪಾರ",
       science: "ವಿಜ್ಞಾನ",
       health: "ಆರೋಗ್ಯ",
-      sports: "ಕ್ರೀಡೆ"
+      environment: "ಪರಿಸರ",
+      sports: "ಕ್ರೀಡೆ",
+      entertainment: "ಮನರಂಜನೆ"
     }
   },
   ml: {
@@ -985,11 +1015,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ട്രെൻഡിംഗ്",
       india: "ഇന്ത്യ",
       world: "ലോകം",
+      politics: "രാഷ്ട്രീയം",
       technology: "സാങ്കേതികവിദ്യ",
       business: "ബിസിനസ്സ്",
       science: "ശാസ്ത്രം",
       health: "ആരോഗ്യം",
-      sports: "കായികം"
+      environment: "പരിസ്ഥിതി",
+      sports: "കായികം",
+      entertainment: "വിനോദം"
     }
   },
   pa: {
@@ -1068,11 +1101,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ਟ੍ਰੈਂਡਿੰਗ",
       india: "ਭਾਰਤ",
       world: "ਸੰਸਾਰ",
+      politics: "ਰਾਜਨੀਤੀ",
       technology: "ਤਕਨਾਲੋਜੀ",
       business: "ਵਪਾਰ",
       science: "ਵਿਗਿਆਨ",
       health: "ਸਿਹਤ",
-      sports: "ਖੇਡਾਂ"
+      environment: "ਵਾਤਾਵਰਣ",
+      sports: "ਖੇਡਾਂ",
+      entertainment: "ਮਨੋਰੰਜਨ"
     }
   },
   ur: {
@@ -1151,11 +1187,14 @@ export const translations: Record<Language, TranslationSchema> = {
       trending: "ٹرینڈنگ",
       india: "انڈیا",
       world: "دنیا",
+      politics: "سیاست",
       technology: "ٹیکنالوجی",
       business: "کاروبار",
       science: "سائنس",
       health: "صحت",
-      sports: "کھیل"
+      environment: "ماحول",
+      sports: "کھیل",
+      entertainment: "تفریح"
     }
   }
 };

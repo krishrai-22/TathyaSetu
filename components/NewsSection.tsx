@@ -18,9 +18,15 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
   const categories = [
     { id: 'Trending', label: t.newsCategories.trending },
     { id: 'India', label: t.newsCategories.india },
+    { id: 'World', label: t.newsCategories.world },
+    { id: 'Politics', label: t.newsCategories.politics },
     { id: 'Technology', label: t.newsCategories.technology },
+    { id: 'Business', label: t.newsCategories.business },
     { id: 'Science', label: t.newsCategories.science },
-    { id: 'Health', label: t.newsCategories.health }
+    { id: 'Health', label: t.newsCategories.health },
+    { id: 'Environment', label: t.newsCategories.environment },
+    { id: 'Sports', label: t.newsCategories.sports },
+    { id: 'Entertainment', label: t.newsCategories.entertainment },
   ];
 
   const loadNews = async (cat: string = category) => {
@@ -54,7 +60,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
         </div>
         
         {/* Categories */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar mask-linear-fade">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -62,8 +68,8 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
               className={`
                 px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300
                 ${category === cat.id 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105' 
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-indigo-200'}
+                  ? 'bg-indigo-600 text-white shadow-md' 
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}
               `}
             >
               {cat.label}
@@ -76,7 +82,6 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
         <div className="grid gap-6 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
-              <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-slate-100/50 dark:via-slate-800/50 to-transparent"></div>
               <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded-md w-3/4 mb-4"></div>
               <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-md w-1/4 mb-6"></div>
               <div className="h-20 bg-slate-100 dark:bg-slate-800/50 rounded-xl mb-4"></div>
@@ -87,7 +92,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
           ))}
         </div>
       ) : error ? (
-        <div className="text-center py-16 bg-red-50/50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900/50">
+        <div className="text-center py-16 bg-red-50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900/50">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 font-medium text-lg">Failed to load news</p>
           <button 
@@ -103,7 +108,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
           {news.map((item, idx) => (
             <article 
               key={idx}
-              className="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative"
+              className="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full relative"
             >
               <a href={item.url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 z-10"></a>
               <div className="p-7 flex flex-col h-full">
@@ -123,13 +128,9 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
                   </h3>
                 </div>
                 
-                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed flex-1 mb-6">
+                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed flex-1">
                   {item.snippet}
                 </p>
-
-                <div className="flex items-center text-indigo-600 dark:text-indigo-400 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
-                    {t.readMore} <ExternalLink className="w-4 h-4 ml-2" />
-                </div>
               </div>
             </article>
           ))}
