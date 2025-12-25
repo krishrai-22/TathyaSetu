@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Newspaper, RefreshCw, AlertCircle, Clock } from 'lucide-react';
+import { Newspaper, RefreshCw, AlertCircle, Clock, ExternalLink } from 'lucide-react';
 import { fetchTrendingNews } from '../services/gemini';
 import { NewsItem, Language } from '../types';
 import { TranslationSchema } from '../translations';
@@ -41,27 +41,29 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
   }, [language, category]);
 
   return (
-    <div id="news" className="w-full max-w-5xl mx-auto mt-12 mb-12 scroll-mt-24">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div id="news" className="w-full max-w-5xl mx-auto mt-20 mb-12 scroll-mt-24">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Newspaper className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3 mb-2">
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl">
+                <Newspaper className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
             {t.latestNews}
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">{t.newsSubtitle}</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm ml-1">{t.newsSubtitle}</p>
         </div>
         
         {/* Categories */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar mask-linear-fade">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setCategory(cat.id)}
               className={`
-                px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
+                px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300
                 ${category === cat.id 
-                  ? 'bg-indigo-600 text-white shadow-md' 
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105' 
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-indigo-200'}
               `}
             >
               {cat.label}
@@ -73,26 +75,26 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm animate-pulse">
-              <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
-              <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-2"></div>
-              <div className="h-20 bg-slate-100 dark:bg-slate-800 rounded mb-4"></div>
-              <div className="flex justify-between mt-4">
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+              <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-slate-100/50 dark:via-slate-800/50 to-transparent"></div>
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded-md w-3/4 mb-4"></div>
+              <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-md w-1/4 mb-6"></div>
+              <div className="h-20 bg-slate-100 dark:bg-slate-800/50 rounded-xl mb-4"></div>
+              <div className="flex justify-between mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-md w-20"></div>
               </div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="text-center py-12 bg-red-50 dark:bg-red-950/20 rounded-xl border border-red-100 dark:border-red-900/50">
-          <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-          <p className="text-red-600 dark:text-red-400 font-medium">Failed to load news</p>
+        <div className="text-center py-16 bg-red-50/50 dark:bg-red-950/20 rounded-3xl border border-red-100 dark:border-red-900/50">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-600 dark:text-red-400 font-medium text-lg">Failed to load news</p>
           <button 
             onClick={() => loadNews()}
-            className="mt-4 px-4 py-2 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors inline-flex items-center gap-2"
+            className="mt-6 px-6 py-2.5 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors inline-flex items-center gap-2 font-medium shadow-sm"
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw className="w-4 h-4" />
             Try Again
           </button>
         </div>
@@ -101,43 +103,48 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
           {news.map((item, idx) => (
             <article 
               key={idx}
-              className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+              className="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col h-full relative"
             >
-              <div className="p-6 flex flex-col h-full">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md">
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 z-10"></a>
+              <div className="p-7 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800">
                     {item.source || 'News'}
                   </span>
-                  <span className="flex items-center gap-1 text-xs text-slate-400">
-                    <Clock className="w-3 h-3" />
+                  <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                    <Clock className="w-3.5 h-3.5" />
                     {item.publishedTime || 'Recent'}
                   </span>
                 </div>
                 
-                <div className="block mb-3">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2">
+                <div className="block mb-4">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {item.title}
                   </h3>
                 </div>
                 
-                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-4 flex-1">
+                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed flex-1 mb-6">
                   {item.snippet}
                 </p>
+
+                <div className="flex items-center text-indigo-600 dark:text-indigo-400 text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 duration-300">
+                    {t.readMore} <ExternalLink className="w-4 h-4 ml-2" />
+                </div>
               </div>
             </article>
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+        <div className="text-center py-20 text-slate-500 dark:text-slate-400 italic">
           No news found for this category.
         </div>
       )}
       
       {!loading && !error && news.length > 0 && (
-         <div className="mt-8 text-center">
+         <div className="mt-10 text-center">
              <button 
                 onClick={() => loadNews()}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md"
              >
                 <RefreshCw className="w-4 h-4" />
                 {t.loadMoreNews}

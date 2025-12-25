@@ -28,7 +28,6 @@ export const InputForm: React.FC<InputFormProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  // Update text if initialValue changes (for popup pasted text)
   useEffect(() => {
     if (initialValue) setText(initialValue);
   }, [initialValue]);
@@ -55,7 +54,7 @@ export const InputForm: React.FC<InputFormProps> = ({
   const validateAndSetFile = (file: File) => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'audio/wav', 'audio/mp3', 'audio/mpeg', 'video/mp4'];
     if (validTypes.includes(file.type)) {
-      if (file.size > 100 * 1024 * 1024) { // 100MB limit
+      if (file.size > 100 * 1024 * 1024) { 
         alert(t.fileTooLarge);
         return;
       }
@@ -104,7 +103,6 @@ export const InputForm: React.FC<InputFormProps> = ({
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    
     if (activeTab === 'text' && text.trim()) {
       onAnalyze(text);
     } else if ((activeTab === 'image' || activeTab === 'audio') && file) {
@@ -124,19 +122,30 @@ export const InputForm: React.FC<InputFormProps> = ({
     switch (activeTab) {
       case 'text':
         return (
-          <textarea
-            className="w-full h-40 p-6 text-lg text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-transparent border-none focus:ring-0 resize-none outline-none"
-            placeholder={t.inputPlaceholder}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <textarea
+                className="w-full h-40 p-6 text-lg text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 bg-transparent border-none focus:ring-0 resize-none outline-none leading-relaxed selection:bg-indigo-100 dark:selection:bg-indigo-900/40"
+                placeholder={t.inputPlaceholder}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isLoading}
+            />
+            {text && (
+                 <button onClick={() => setText('')} className="absolute top-4 right-4 p-1 text-slate-300 hover:text-slate-500 transition-colors">
+                    <X className="w-4 h-4" />
+                 </button>
+            )}
+          </div>
         );
       case 'image':
         return (
           <div 
-            className="h-40 flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg m-4 hover:border-indigo-400 transition-colors cursor-pointer"
+            className={`h-40 flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl m-4 transition-all duration-300 cursor-pointer ${
+                dragActive 
+                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' 
+                : 'border-slate-300 dark:border-slate-700 hover:border-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+            }`}
             onClick={() => fileInputRef.current?.click()}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -144,85 +153,97 @@ export const InputForm: React.FC<InputFormProps> = ({
             onDrop={handleDrop}
           >
             {file ? (
-              <div className="relative group w-full h-full flex items-center justify-center">
+              <div className="relative group w-full h-full flex items-center justify-center animate-scale-in">
                 {file.type.startsWith('image/') ? (
-                  <img src={URL.createObjectURL(file)} alt="Preview" className="h-full object-contain rounded" />
+                  <img src={URL.createObjectURL(file)} alt="Preview" className="h-full object-contain rounded shadow-sm" />
                 ) : (
                   <div className="text-center">
-                    <FileVideo className="w-12 h-12 mx-auto text-indigo-500 mb-2" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">{file.name}</span>
+                    <FileVideo className="w-12 h-12 mx-auto text-indigo-500 mb-2 animate-bounce" />
+                    <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">{file.name}</span>
                   </div>
                 )}
                 <button 
                   onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                  className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-md hover:scale-110"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="text-center space-y-2">
-                <Upload className="w-8 h-8 mx-auto text-slate-400" />
-                <p className="text-sm text-slate-500">{t.uploadTooltip} <span className="text-xs opacity-70">({t.supports})</span></p>
-                <p className="text-xs text-slate-400 opacity-80">{t.sizeLimit}</p>
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                     <Upload className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                </div>
+                <div>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">{t.uploadTooltip}</p>
+                    <p className="text-xs text-slate-400 mt-1">{t.supports} • {t.sizeLimit}</p>
+                </div>
               </div>
             )}
           </div>
         );
       case 'audio':
         return (
-          <div className="h-40 flex flex-col items-center justify-center space-y-6">
+          <div className="h-40 flex flex-col items-center justify-center space-y-6 animate-fade-in">
             {file ? (
-               <div className="flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                 <FileAudio className="w-8 h-8 text-indigo-500" />
+               <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 animate-scale-in">
+                 <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                    <FileAudio className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                 </div>
                  <div className="text-sm">
                    <p className="font-medium text-slate-700 dark:text-slate-200">{file.name}</p>
                    <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                  </div>
-                 <button onClick={() => setFile(null)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
+                 <button onClick={() => setFile(null)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
                    <X className="w-4 h-4" />
                  </button>
                </div>
             ) : (
-              <button
-                type="button"
-                onClick={isRecording ? stopRecording : startRecording}
-                className={`
-                  w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 relative
-                  ${isRecording ? 'bg-red-500 scale-110 shadow-red-500/50 shadow-lg' : 'bg-indigo-600 hover:bg-indigo-500 shadow-lg'}
-                `}
-              >
-                {isRecording && <span className="absolute inset-0 rounded-full border-4 border-red-200 animate-ping"></span>}
-                {isRecording ? <Square className="w-8 h-8 text-white fill-current" /> : <Mic className="w-8 h-8 text-white" />}
-              </button>
+              <>
+                <button
+                    type="button"
+                    onClick={isRecording ? stopRecording : startRecording}
+                    className={`
+                    w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 relative
+                    ${isRecording ? 'bg-red-500 scale-110 shadow-lg shadow-red-500/40' : 'bg-gradient-to-br from-indigo-500 to-indigo-700 hover:shadow-xl hover:scale-105'}
+                    `}
+                >
+                    {isRecording && <span className="absolute inset-0 rounded-full border-[3px] border-white/30 animate-ping"></span>}
+                    {isRecording ? <Square className="w-8 h-8 text-white fill-current" /> : <Mic className="w-8 h-8 text-white" />}
+                </button>
+                <p className="text-sm text-slate-500 font-medium animate-pulse">
+                {isRecording ? t.recording : t.recordTooltip}
+                </p>
+              </>
             )}
-            <p className="text-sm text-slate-500 font-medium">
-              {isRecording ? t.recording : file ? t.removeFile : t.recordTooltip}
-            </p>
           </div>
         );
       case 'url':
         return (
-          <div className="h-40 flex flex-col justify-center p-6">
-            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 focus-within:ring-2 ring-indigo-500/50 transition-all">
-              <Link className="w-5 h-5 text-slate-400 shrink-0" />
+          <div className="h-40 flex flex-col justify-center p-6 animate-fade-in">
+            <div className="group flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+              <div className="p-2 bg-white dark:bg-slate-900 rounded-lg shadow-sm">
+                 <Link className="w-5 h-5 text-indigo-500" />
+              </div>
               <input
                 type="url"
-                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-slate-100 placeholder-slate-400"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-slate-100 placeholder-slate-400 font-medium"
                 placeholder={t.pasteUrl}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
               {url && (
-                <button onClick={() => setUrl('')} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
+                <button onClick={() => setUrl('')} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
                   <X className="w-4 h-4 text-slate-500" />
                 </button>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-2 text-center">{t.urlDisclaimer}</p>
             {url && !url.match(/^https?:\/\/.+\..+/) && (
-              <p className="text-red-500 text-xs mt-2 pl-2">{t.invalidUrl}</p>
+              <p className="text-red-500 text-xs mt-3 pl-2 flex items-center gap-1 animate-slide-down">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />
+                  {t.invalidUrl}
+              </p>
             )}
           </div>
         );
@@ -238,10 +259,10 @@ export const InputForm: React.FC<InputFormProps> = ({
   };
 
   return (
-    <div id="analyzer" className="w-full max-w-3xl mx-auto space-y-4 scroll-mt-24">
+    <div id="analyzer" className="w-full max-w-3xl mx-auto space-y-6 scroll-mt-24">
       {/* Tabs */}
       <div className="flex justify-center">
-        <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex gap-1">
+        <div className="bg-white dark:bg-slate-900 p-1.5 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-800 flex gap-1 relative overflow-hidden">
           {[
             { id: 'text', icon: Type, label: 'Text' },
             { id: 'image', icon: ImageIcon, label: 'Media' },
@@ -252,13 +273,16 @@ export const InputForm: React.FC<InputFormProps> = ({
               key={tab.id}
               onClick={() => { setActiveTab(tab.id as InputType); setFile(null); }}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200
+                relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 outline-none
                 ${activeTab === tab.id 
-                  ? 'bg-indigo-600 text-white shadow-md' 
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}
+                  ? 'text-white shadow-md' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}
               `}
             >
-              <tab.icon className="w-4 h-4" />
+              {activeTab === tab.id && (
+                <div className="absolute inset-0 bg-indigo-600 rounded-xl -z-10 animate-scale-in origin-center" style={{ animationDuration: '0.2s' }}></div>
+              )}
+              <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-white' : ''}`} />
               <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
@@ -267,23 +291,30 @@ export const InputForm: React.FC<InputFormProps> = ({
 
       <form onSubmit={handleSubmit}>
         <div className="relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl blur opacity-30 dark:opacity-40 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-          <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden transition-colors">
+          {/* Animated Glow Background */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200 animate-shimmer bg-[length:200%_auto]"></div>
+          
+          <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-white/5 overflow-hidden transition-colors">
             
             {renderContent()}
 
-            <div className="flex items-center justify-between px-6 pb-4 bg-white/50 dark:bg-slate-900/50 border-t border-slate-50 dark:border-slate-800 pt-3">
-              <div className="text-xs text-slate-400 font-medium">
-                {activeTab === 'text' && `${text.length} ${t.chars}`}
+            <div className="flex items-center justify-between px-6 pb-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800/50 pt-4">
+              <div className="text-xs text-slate-400 font-medium pl-1">
+                {activeTab === 'text' && text.length > 0 && (
+                   <span className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      {text.length} {t.chars}
+                   </span>
+                )}
               </div>
               <button
                 type="submit"
                 disabled={getButtonDisabled()}
                 className={`
-                  flex items-center gap-2 px-6 py-2.5 rounded-lg font-semibold text-white transition-all transform
+                  flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-white transition-all transform duration-300
                   ${getButtonDisabled()
-                    ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed' 
-                    : 'bg-indigo-600 hover:bg-indigo-700 hover:scale-105 active:scale-95 shadow-md hover:shadow-lg dark:bg-indigo-600 dark:hover:bg-indigo-500'}
+                    ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed opacity-70' 
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 hover:shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-0.5 active:translate-y-0'}
                 `}
               >
                 {isLoading ? (
