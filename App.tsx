@@ -63,11 +63,12 @@ const App: React.FC = () => {
     <div className="min-h-screen relative overflow-x-hidden transition-colors duration-500">
       
       {/* Ambient Background */}
-      <div className="fixed inset-0 -z-10 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
-        <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-900 [mask-image:linear-gradient(to_bottom,white,transparent)]" />
-        <div className="absolute top-0 -left-4 w-96 h-96 bg-indigo-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob dark:mix-blend-normal dark:bg-indigo-900/20"></div>
-        <div className="absolute top-0 -right-4 w-96 h-96 bg-blue-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 dark:mix-blend-normal dark:bg-blue-900/20"></div>
-        <div className="absolute -bottom-32 left-20 w-96 h-96 bg-purple-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000 dark:mix-blend-normal dark:bg-purple-900/20"></div>
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/80 dark:bg-slate-950 dark:from-slate-950 dark:to-slate-950 transition-colors duration-500">
+        <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-900 [mask-image:linear-gradient(to_bottom,white,transparent)]" />
+        {/* Blobs: Increased opacity/visibility in light mode */}
+        <div className="absolute top-0 -left-4 w-96 h-96 bg-indigo-400/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob dark:mix-blend-normal dark:bg-indigo-900/20 dark:opacity-30"></div>
+        <div className="absolute top-0 -right-4 w-96 h-96 bg-cyan-400/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000 dark:mix-blend-normal dark:bg-blue-900/20 dark:opacity-30"></div>
+        <div className="absolute -bottom-32 left-20 w-96 h-96 bg-purple-400/40 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000 dark:mix-blend-normal dark:bg-purple-900/20 dark:opacity-30"></div>
       </div>
 
       <MethodologyModal 
