@@ -64,11 +64,9 @@ Create a `.env` file in the root directory:
 # Required for Web App & Extension
 API_KEY=your_google_gemini_api_key
 
-# Required for WhatsApp Bot
+# Required for WhatsApp Bot (Both Vercel and Standalone)
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
-WHATSAPP_PHONE_ID=your_meta_phone_id_if_using_direct_api
-VERIFY_TOKEN=your_custom_verify_token
 PORT=3000
 ```
 
@@ -82,7 +80,7 @@ Visit `http://localhost:5173`.
 
 ## 🤖 WhatsApp Bot Setup
 
-You have two options to run the WhatsApp bot:
+You have two options to run the WhatsApp bot. Both require the same `.env` configuration.
 
 ### Option A: Vercel Serverless (Recommended)
 This uses the file at `api/webhook.js`.
@@ -95,13 +93,19 @@ This uses the file at `api/webhook.js`.
 This uses the file at `server/index.js` (useful for VPS like DigitalOcean/AWS).
 1.  Navigate to the server directory (or root if running merged):
     ```bash
+    # Install server dependencies first if not done
+    cd server
+    npm install
+    
+    # Run server (from root)
     node server/index.js
     ```
 2.  Use **ngrok** to expose your local port 3000:
     ```bash
     ngrok http 3000
     ```
-3.  Update Twilio webhook URL to your ngrok URL (e.g., `https://abc.ngrok-free.app/webhook`).
+3.  In **Twilio Console** > **Messaging** > **WhatsApp Sandbox Settings**:
+    *   Set **"When a message comes in"** to your ngrok URL: `https://your-ngrok-url.app/webhook` (Method: POST).
 
 ---
 
@@ -124,7 +128,7 @@ This uses the file at `server/index.js` (useful for VPS like DigitalOcean/AWS).
 
 ```
 ├── api/                  # Vercel Serverless Function (Twilio Webhook)
-├── server/               # Standalone Node.js Express Server
+├── server/               # Standalone Node.js Express Server (Twilio Bot)
 ├── extension/            # Chrome Extension source (manifest, background, popup)
 ├── components/           # React Components (InputForm, ResultCard, etc.)
 ├── services/             # Gemini API integration & Logic
