@@ -43,12 +43,15 @@ export default async function handler(req, res) {
     const promptText = `
       Analyze for misinformation. Output JSON.
       Instructions:
-      1. Use googleSearch to verify. FIND AND CITE AT LEAST 3 DISTINCT, RELIABLE SOURCES.
-      2. Output Schema:
+      1. Detect the language of the User's Input Text. If it is a URL, detect the language of the content.
+      2. Use googleSearch to verify. FIND AND CITE AT LEAST 3 DISTINCT, RELIABLE SOURCES.
+      3. Output Schema:
          - verdict: TRUE/FALSE/MISLEADING/UNVERIFIED/SATIRE
-         - confidence: 0-100
-         - summary: ONE short sentence.
-         - keyPoints: Array of max 3 short bullet points.
+         - verdict_label: The verdict word translated to the DETECTED LANGUAGE.
+         - confidence: 0-100 (integer)
+         - summary: ONE short sentence explaining the verdict in the DETECTED LANGUAGE.
+         - keyPoints: Array of exactly 3 short bullet points in the DETECTED LANGUAGE.
+         - ui_text: Object with translated labels for: "TathyaSetu Report" (report_title), "Confidence" (confidence_label), "Key Findings" (findings_label).
       Input Text: "${Body}"
     `;
 
@@ -62,11 +65,21 @@ export default async function handler(req, res) {
           type: Type.OBJECT,
           properties: {
             verdict: { type: Type.STRING, enum: ["TRUE", "FALSE", "MISLEADING", "UNVERIFIED", "SATIRE"] },
+            verdict_label: { type: Type.STRING },
             confidence: { type: Type.NUMBER },
             summary: { type: Type.STRING },
             keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+            ui_text: {
+                type: Type.OBJECT,
+                properties: {
+                    report_title: { type: Type.STRING },
+                    confidence_label: { type: Type.STRING },
+                    findings_label: { type: Type.STRING }
+                },
+                required: ["report_title", "confidence_label", "findings_label"]
+            }
           },
-          required: ["verdict", "confidence", "summary", "keyPoints"],
+          required: ["verdict", "verdict_label", "confidence", "summary", "keyPoints", "ui_text"],
         },
       },
     });
@@ -84,12 +97,14 @@ export default async function handler(req, res) {
     // Fallbacks
     const finalResult = {
         verdict: result.verdict || "UNVERIFIED",
+        verdict_label: result.verdict_label || result.verdict || "Unverified",
         confidence: result.confidence || 0,
         summary: result.summary || "Could not complete full analysis.",
-        keyPoints: Array.isArray(result.keyPoints) ? result.keyPoints : ["No detailed findings."]
+        keyPoints: Array.isArray(result.keyPoints) ? result.keyPoints : ["No detailed findings."],
+        ui_text: result.ui_text || { report_title: "TathyaSetu Report", confidence_label: "Confidence", findings_label: "Key Findings" }
     };
 
-    // Extract Sources
+    // Extract Sources (kept logic but not displayed)
     const sources = [];
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (chunks) {
@@ -110,11 +125,14 @@ export default async function handler(req, res) {
     if (finalResult.verdict === 'MISLEADING') emoji = '⚠️';
     if (finalResult.verdict === 'SATIRE') emoji = '🎭';
 
-    const reply = `*TathyaSetu Report* ${emoji}\n\n` +
-      `*Verdict:* ${finalResult.verdict}\n` +
-      `*Confidence:* ${finalResult.confidence}%\n\n` +
+    const ui = finalResult.ui_text;
+    const vLabel = finalResult.verdict_label;
+
+    const reply = `*${ui.report_title}* ${emoji}\n\n` +
+      `*${vLabel}*\n` +
+      `*${ui.confidence_label}:* ${finalResult.confidence}%\n\n` +
       `_${finalResult.summary}_\n\n` +
-      `*Key Findings:*\n${(finalResult.keyPoints || []).map(p => `• ${p}`).join('\n')}`;
+      `*${ui.findings_label}:*\n${(finalResult.keyPoints || []).map(p => `• ${p}`).join('\n')}`;
 
     // 9. Send Reply via Twilio
     await client.messages.create({

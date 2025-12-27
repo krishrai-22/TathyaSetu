@@ -76,11 +76,15 @@ async function processMessage({ Body, From, To }) {
       if (analysis.verdict === 'SATIRE') emoji = '🎭';
       if (analysis.verdict === 'UNVERIFIED') emoji = '🔍';
 
-      const reply = `*TathyaSetu Report* ${emoji}\n\n` +
-        `*Verdict:* ${analysis.verdict}\n` +
-        `*Confidence:* ${analysis.confidence || 0}%\n\n` +
+      // Use localized labels from the analysis response
+      const ui = analysis.ui_text || { report_title: "TathyaSetu Report", confidence_label: "Confidence", findings_label: "Key Findings" };
+      const vLabel = analysis.verdict_label || analysis.verdict;
+
+      const reply = `*${ui.report_title}* ${emoji}\n\n` +
+        `*${vLabel}*\n` +
+        `*${ui.confidence_label}:* ${analysis.confidence || 0}%\n\n` +
         `_${analysis.summary || 'No summary available.'}_\n\n` +
-        `*Key Findings:*\n${(analysis.keyPoints && analysis.keyPoints.length > 0) ? analysis.keyPoints.map(p => `• ${p}`).join('\n') : '• No key points generated.'}`;
+        `*${ui.findings_label}:*\n${(analysis.keyPoints && analysis.keyPoints.length > 0) ? analysis.keyPoints.map(p => `• ${p}`).join('\n') : ''}`;
 
       // Send reply via Twilio API
       await client.messages.create({
@@ -108,16 +112,19 @@ async function processMessage({ Body, From, To }) {
 }
 
 async function analyzeWithGemini(text) {
-  // Base instructions
+  // Base instructions with language detection
   const basePrompt = `
     Analyze this content for misinformation. Output JSON.
     Instructions:
-    1. Use googleSearch to verify. FIND AND CITE AT LEAST 3 DISTINCT, RELIABLE SOURCES.
-    2. Output Schema:
+    1. Detect the language of the User's Input Text. If the input is just a URL, detect the language of the content at that URL.
+    2. Use googleSearch to verify. FIND AND CITE AT LEAST 3 DISTINCT, RELIABLE SOURCES.
+    3. Output Schema:
        - verdict: TRUE/FALSE/MISLEADING/UNVERIFIED/SATIRE
+       - verdict_label: The verdict word translated to the DETECTED LANGUAGE.
        - confidence: 0-100 (integer)
-       - summary: ONE short sentence explaining the verdict.
-       - keyPoints: Array of exactly 3 short bullet points.
+       - summary: ONE short sentence explaining the verdict in the DETECTED LANGUAGE.
+       - keyPoints: Array of exactly 3 short bullet points in the DETECTED LANGUAGE.
+       - ui_text: Object with translated labels for: "TathyaSetu Report" (report_title), "Confidence" (confidence_label), "Key Findings" (findings_label).
   `;
 
   let parts = [];
@@ -142,11 +149,21 @@ async function analyzeWithGemini(text) {
           type: Type.OBJECT,
           properties: {
             verdict: { type: Type.STRING, enum: ["TRUE", "FALSE", "MISLEADING", "UNVERIFIED", "SATIRE"] },
+            verdict_label: { type: Type.STRING },
             confidence: { type: Type.NUMBER },
             summary: { type: Type.STRING },
             keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+            ui_text: {
+                type: Type.OBJECT,
+                properties: {
+                    report_title: { type: Type.STRING },
+                    confidence_label: { type: Type.STRING },
+                    findings_label: { type: Type.STRING }
+                },
+                required: ["report_title", "confidence_label", "findings_label"]
+            }
           },
-          required: ["verdict", "confidence", "summary", "keyPoints"],
+          required: ["verdict", "verdict_label", "confidence", "summary", "keyPoints", "ui_text"],
         },
       },
     });
@@ -166,12 +183,14 @@ async function analyzeWithGemini(text) {
     // Default Fallbacks
     const finalResult = {
         verdict: result.verdict || "UNVERIFIED",
+        verdict_label: result.verdict_label || result.verdict || "Unverified",
         confidence: result.confidence || 0,
         summary: result.summary || "Analysis could not be completed successfully.",
-        keyPoints: Array.isArray(result.keyPoints) ? result.keyPoints : ["No detailed findings available."]
+        keyPoints: Array.isArray(result.keyPoints) ? result.keyPoints : ["No detailed findings available."],
+        ui_text: result.ui_text || { report_title: "TathyaSetu Report", confidence_label: "Confidence", findings_label: "Key Findings" }
     };
     
-    // Extract Sources
+    // Extract Sources (kept for internal logic if needed, but not displayed per user request)
     const sources = [];
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (chunks) {
