@@ -24,6 +24,15 @@ if (!API_KEY || !TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
   process.exit(1);
 }
 
+// Global Error Handlers to prevent server crash
+process.on('uncaughtException', (err) => {
+  console.error('🔥 Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔥 Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Initialize Clients
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
@@ -34,11 +43,15 @@ app.post('/webhook', (req, res) => {
 
   console.log(`📩 Webhook received from ${From}`);
 
-  // 1. IMMEDIATE ACKNOWLEDGEMENT to prevent Twilio Timeout
+  // 1. IMMEDIATE ACKNOWLEDGEMENT to prevent Twilio Timeout (15s limit)
   res.type('text/xml').send('<Response></Response>');
 
-  // 2. ASYNC PROCESSING
-  (async () => {
+  // 2. PROCESS LOGIC (Fire and Forget)
+  processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaContentType0 })
+    .catch(err => console.error("❌ Fatal Error in processMessage:", err));
+});
+
+async function processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaContentType0 }) {
     try {
       const hasMedia = parseInt(NumMedia) > 0;
       const textBody = Body || "";
@@ -86,20 +99,20 @@ app.post('/webhook', (req, res) => {
       console.log(`✅ Replied to ${From}`);
 
     } catch (error) {
-      console.error("❌ Error processing message:", error);
+      console.error("❌ Error processing message logic:", error.message);
       
+      // Attempt to send error message to user so they know it failed
       try {
           await client.messages.create({
               from: To,
               to: From,
-              body: "⚠️ Sorry, I encountered an error while analyzing that. Please try again."
+              body: "⚠️ Sorry, I encountered an error while analyzing that. Please try again later."
           });
       } catch(e) { 
-        console.error("Failed to send error notification:", e);
+        console.error("Failed to send error notification to user:", e.message);
       }
     }
-  })();
-});
+}
 
 async function analyzeWithGemini(text, mediaUrl, mediaType) {
   let parts = [];
@@ -121,7 +134,11 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
       try {
           console.log("Downloading media...", mediaUrl);
           // Download media from Twilio URL
-          const mediaResponse = await axios.get(mediaUrl, { responseType: 'arraybuffer', timeout: 10000 });
+          const mediaResponse = await axios.get(mediaUrl, { 
+            responseType: 'arraybuffer', 
+            timeout: 15000,
+            maxContentLength: 20 * 1024 * 1024 // 20MB max
+          });
           const base64Data = Buffer.from(mediaResponse.data).toString('base64');
           
           parts.push({
@@ -179,7 +196,13 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
         result = JSON.parse(rawText);
     } catch (e) {
         console.error("Failed to parse JSON response:", rawText);
-        throw new Error("Invalid format received from AI");
+        // Fallback result
+        result = {
+            verdict: "UNVERIFIED",
+            confidence: 0,
+            summary: "Error parsing AI response. Please try again.",
+            keyPoints: ["System Error"]
+        };
     }
     
     // Extract Sources
