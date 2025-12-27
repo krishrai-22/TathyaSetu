@@ -5,6 +5,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import axios from 'axios';
 
 // Load env vars from root directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,40 +30,34 @@ const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 const modelId = "gemini-3-flash-preview";
 
 app.post('/webhook', (req, res) => {
-  const { Body, From, To, NumMedia } = req.body;
+  const { Body, From, To, NumMedia, MediaUrl0, MediaContentType0 } = req.body;
 
   console.log(`📩 Webhook received from ${From}`);
 
   // 1. IMMEDIATE ACKNOWLEDGEMENT
-  // Respond to Twilio immediately with empty TwiML to prevent the 15s timeout.
-  // This tells Twilio "We received the message, stop waiting."
   res.type('text/xml').send('<Response></Response>');
 
   // 2. ASYNC PROCESSING
-  // Process the AI logic in the background
   (async () => {
     try {
-      // Basic input validation
-      if (parseInt(NumMedia) > 0 && !Body) {
-        // Media message without caption - currently not supported by this text-only bot logic
-        await client.messages.create({
-          from: To,
-          to: From,
-          body: "📷 I see you sent media! Please provide a text caption or claim with it for me to analyze."
-        });
+      const hasMedia = parseInt(NumMedia) > 0;
+      const textBody = Body || "";
+      const isUrl = textBody.match(/https?:\/\/[^\s]+/);
+
+      // Log input type
+      if (hasMedia) console.log(`📷 Media received: ${MediaContentType0}`);
+      else if (isUrl) console.log(`🔗 URL received: ${textBody}`);
+      else console.log(`📝 Text received: "${textBody.substring(0, 50)}..."`);
+
+      if (!hasMedia && !textBody.trim()) {
+        console.log("Empty message ignored.");
         return;
       }
-
-      if (!Body || !Body.trim()) {
-        console.log("Empty body, ignoring.");
-        return;
-      }
-
-      console.log(`🔍 Analyzing: "${Body.substring(0, 50)}..."`);
       
-      const analysis = await analyzeWithGemini(Body);
+      // Analyze
+      const analysis = await analyzeWithGemini(textBody, hasMedia ? MediaUrl0 : null, hasMedia ? MediaContentType0 : null);
       
-      // Format the response (WhatsApp supports Markdown)
+      // Format the response
       let emoji = '❓';
       if (analysis.verdict === 'TRUE') emoji = '✅';
       if (analysis.verdict === 'FALSE') emoji = '❌';
@@ -76,7 +71,7 @@ app.post('/webhook', (req, res) => {
         `*Key Findings:*\n${analysis.keyPoints.map(p => `• ${p}`).join('\n')}\n\n` +
         `*Verified Sources:*\n${analysis.sources.length > 0 ? analysis.sources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
 
-      // Send reply via Twilio REST API
+      // Send reply
       await client.messages.create({
         from: To,
         to: From,
@@ -88,7 +83,6 @@ app.post('/webhook', (req, res) => {
     } catch (error) {
       console.error("❌ Error processing message:", error);
       
-      // Attempt to send error message to user
       try {
           await client.messages.create({
               from: To,
@@ -102,9 +96,12 @@ app.post('/webhook', (req, res) => {
   })();
 });
 
-async function analyzeWithGemini(input) {
-  const promptText = `
-    Analyze for misinformation. Output JSON.
+async function analyzeWithGemini(text, mediaUrl, mediaType) {
+  let parts = [];
+  
+  // Base instructions for all inputs
+  const basePrompt = `
+    Analyze this content for misinformation. Output JSON.
     Instructions:
     1. Use googleSearch to verify. FIND AND CITE AT LEAST 3 DISTINCT, RELIABLE SOURCES.
     2. Output Schema:
@@ -112,12 +109,43 @@ async function analyzeWithGemini(input) {
        - confidence: 0-100
        - summary: ONE short sentence.
        - keyPoints: Array of max 3 short bullet points.
-    Input Text: "${input}"
   `;
+
+  // 1. Handle Media (Images/Audio)
+  if (mediaUrl && mediaType) {
+      try {
+          // Download media from Twilio URL
+          const mediaResponse = await axios.get(mediaUrl, { responseType: 'arraybuffer' });
+          const base64Data = Buffer.from(mediaResponse.data).toString('base64');
+          
+          parts.push({
+              inlineData: {
+                  data: base64Data,
+                  mimeType: mediaType
+              }
+          });
+          
+          // Add specific prompt for media
+          let context = text ? `Context provided by user: "${text}"` : "No text context provided.";
+          parts.push({ text: `${basePrompt}\n\nTask: Analyze the claims, visuals, or audio in this file. ${context}` });
+          
+      } catch (e) {
+          console.error("Failed to download media:", e.message);
+          throw new Error("Failed to process media attachment.");
+      }
+  } 
+  // 2. Handle URL
+  else if (text && text.match(/https?:\/\/[^\s]+/)) {
+      parts.push({ text: `${basePrompt}\n\nTask: Verify the credibility and accuracy of the content at this link: "${text}".` });
+  } 
+  // 3. Handle Plain Text
+  else {
+      parts.push({ text: `${basePrompt}\n\nInput Text: "${text}"` });
+  }
 
   const response = await ai.models.generateContent({
     model: modelId,
-    contents: { parts: [{ text: promptText }] },
+    contents: { parts: parts },
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
