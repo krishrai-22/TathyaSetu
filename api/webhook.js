@@ -20,11 +20,7 @@ export default async function handler(req, res) {
     // 3. Parse Twilio Incoming Data
     const { Body, From, To } = req.body;
 
-    // NOTE: On Vercel, we must wait for processing to finish before sending response.
-    // We cannot do the "fire-and-forget" optimization used in the Node server.
-    
     if (!Body) {
-        // Just return OK to empty triggers to avoid errors in Twilio console
         return res.status(200).send('OK'); 
     }
 
@@ -62,24 +58,28 @@ export default async function handler(req, res) {
             summary: { type: Type.STRING },
             keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
           },
+          required: ["verdict", "confidence", "summary", "keyPoints"],
         },
       },
     });
 
-    let result;
+    let result = {};
     try {
         let rawText = response.text || "{}";
         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
         result = JSON.parse(rawText);
     } catch(e) {
         console.error("Failed to parse JSON", e);
-        result = {
-            verdict: "UNVERIFIED",
-            confidence: 0,
-            summary: "Could not parse analysis.",
-            keyPoints: []
-        };
+        result = {};
     }
+
+    // Fallbacks
+    const finalResult = {
+        verdict: result.verdict || "UNVERIFIED",
+        confidence: result.confidence || 0,
+        summary: result.summary || "Could not complete full analysis.",
+        keyPoints: Array.isArray(result.keyPoints) ? result.keyPoints : ["No detailed findings."]
+    };
 
     // Extract Sources
     const sources = [];
@@ -97,16 +97,16 @@ export default async function handler(req, res) {
 
     // 7. Format WhatsApp Message
     let emoji = '❓';
-    if (result.verdict === 'TRUE') emoji = '✅';
-    if (result.verdict === 'FALSE') emoji = '❌';
-    if (result.verdict === 'MISLEADING') emoji = '⚠️';
-    if (result.verdict === 'SATIRE') emoji = '🎭';
+    if (finalResult.verdict === 'TRUE') emoji = '✅';
+    if (finalResult.verdict === 'FALSE') emoji = '❌';
+    if (finalResult.verdict === 'MISLEADING') emoji = '⚠️';
+    if (finalResult.verdict === 'SATIRE') emoji = '🎭';
 
     const reply = `*TathyaSetu Report* ${emoji}\n\n` +
-      `*Verdict:* ${result.verdict}\n` +
-      `*Confidence:* ${result.confidence}%\n\n` +
-      `_${result.summary}_\n\n` +
-      `*Key Findings:*\n${(result.keyPoints || []).map(p => `• ${p}`).join('\n')}\n\n` +
+      `*Verdict:* ${finalResult.verdict}\n` +
+      `*Confidence:* ${finalResult.confidence}%\n\n` +
+      `_${finalResult.summary}_\n\n` +
+      `*Key Findings:*\n${(finalResult.keyPoints || []).map(p => `• ${p}`).join('\n')}\n\n` +
       `*Verified Sources:*\n${uniqueSources.length > 0 ? uniqueSources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
 
     // 8. Send Reply via Twilio
@@ -120,7 +120,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error("Error processing Twilio webhook:", error);
-    // Even on error, send 200 to Twilio to stop retries
     return res.status(200).send('Error');
   }
 }

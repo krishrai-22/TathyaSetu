@@ -70,10 +70,6 @@ async function processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaConten
       // Analyze
       const analysis = await analyzeWithGemini(textBody, hasMedia ? MediaUrl0 : null, hasMedia ? MediaContentType0 : null);
       
-      if (!analysis) {
-        throw new Error("Analysis returned null/undefined");
-      }
-
       // Format the response (WhatsApp supports Markdown)
       let emoji = '❓';
       if (analysis.verdict === 'TRUE') emoji = '✅';
@@ -84,9 +80,9 @@ async function processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaConten
 
       const reply = `*TathyaSetu Report* ${emoji}\n\n` +
         `*Verdict:* ${analysis.verdict}\n` +
-        `*Confidence:* ${analysis.confidence}%\n\n` +
-        `_${analysis.summary}_\n\n` +
-        `*Key Findings:*\n${(analysis.keyPoints || []).map(p => `• ${p}`).join('\n')}\n\n` +
+        `*Confidence:* ${analysis.confidence || 0}%\n\n` +
+        `_${analysis.summary || 'No summary available.'}_\n\n` +
+        `*Key Findings:*\n${(analysis.keyPoints && analysis.keyPoints.length > 0) ? analysis.keyPoints.map(p => `• ${p}`).join('\n') : '• No key points generated.'}\n\n` +
         `*Verified Sources:*\n${analysis.sources && analysis.sources.length > 0 ? analysis.sources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
 
       // Send reply via Twilio API
@@ -124,9 +120,9 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
     1. Use googleSearch to verify. FIND AND CITE AT LEAST 3 DISTINCT, RELIABLE SOURCES.
     2. Output Schema:
        - verdict: TRUE/FALSE/MISLEADING/UNVERIFIED/SATIRE
-       - confidence: 0-100
-       - summary: ONE short sentence.
-       - keyPoints: Array of max 3 short bullet points.
+       - confidence: 0-100 (integer)
+       - summary: ONE short sentence explaining the verdict.
+       - keyPoints: Array of exactly 3 short bullet points.
   `;
 
   // 1. Handle Media (Images/Audio)
@@ -181,6 +177,7 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
             summary: { type: Type.STRING },
             keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
           },
+          required: ["verdict", "confidence", "summary", "keyPoints"],
         },
       },
     });
@@ -191,19 +188,21 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
     // Clean up Markdown code blocks if present (e.g. ```json ... ```)
     rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    let result;
+    let result = {};
     try {
         result = JSON.parse(rawText);
     } catch (e) {
         console.error("Failed to parse JSON response:", rawText);
-        // Fallback result
-        result = {
-            verdict: "UNVERIFIED",
-            confidence: 0,
-            summary: "Error parsing AI response. Please try again.",
-            keyPoints: ["System Error"]
-        };
+        result = {}; // Ensure result is an object
     }
+
+    // Default Fallbacks for missing fields
+    const finalResult = {
+        verdict: result.verdict || "UNVERIFIED",
+        confidence: result.confidence || 0,
+        summary: result.summary || "Analysis could not be completed successfully.",
+        keyPoints: Array.isArray(result.keyPoints) ? result.keyPoints : ["No detailed findings available."]
+    };
     
     // Extract Sources
     const sources = [];
@@ -220,7 +219,7 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
     }
     
     const uniqueSources = [...new Set(sources)].slice(0, 3);
-    return { ...result, sources: uniqueSources };
+    return { ...finalResult, sources: uniqueSources };
 
   } catch (error) {
     console.error("Gemini API Error:", error.message);
