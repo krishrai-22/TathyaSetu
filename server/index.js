@@ -43,8 +43,20 @@ app.post('/webhook', (req, res) => {
 
   console.log(`📩 Webhook received from ${From}`);
 
-  // 1. IMMEDIATE ACKNOWLEDGEMENT to prevent Twilio Timeout (15s limit)
-  res.type('text/xml').send('<Response></Response>');
+  const hasMedia = parseInt(NumMedia) > 0;
+  const textBody = Body || "";
+
+  // Filter out empty messages early
+  if (!hasMedia && !textBody.trim()) {
+    console.log("Empty message ignored.");
+    return res.type('text/xml').send('<Response></Response>');
+  }
+
+  // 1. IMMEDIATE FEEDBACK: Send "Analyzing" message via TwiML
+  // This acts as the "typing" indicator or immediate acknowledgement
+  const twiml = new twilio.twiml.MessagingResponse();
+  twiml.message("🔍 TathyaSetu is verifying this claim... Please wait.");
+  res.type('text/xml').send(twiml.toString());
 
   // 2. PROCESS LOGIC (Fire and Forget)
   processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaContentType0 })
@@ -61,11 +73,6 @@ async function processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaConten
       if (hasMedia) console.log(`📷 Media received: ${MediaContentType0}`);
       else if (isUrl) console.log(`🔗 URL received: ${textBody}`);
       else console.log(`📝 Text received: "${textBody.substring(0, 50)}..."`);
-
-      if (!hasMedia && !textBody.trim()) {
-        console.log("Empty message ignored.");
-        return;
-      }
       
       // Analyze
       const analysis = await analyzeWithGemini(textBody, hasMedia ? MediaUrl0 : null, hasMedia ? MediaContentType0 : null);

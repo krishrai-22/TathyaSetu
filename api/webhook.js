@@ -18,20 +18,30 @@ export default async function handler(req, res) {
 
   try {
     // 3. Parse Twilio Incoming Data
-    const { Body, From, To } = req.body;
+    const { Body, From, To, NumMedia } = req.body;
+    
+    const hasMedia = parseInt(NumMedia) > 0;
 
-    if (!Body) {
+    if (!Body && !hasMedia) {
         return res.status(200).send('OK'); 
     }
 
-    // 4. Initialize Gemini
+    // 4. Initialize Twilio Client
+    const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+
+    // 5. Send "Analyzing" Status Message
+    // Since Vercel functions can't send partial TwiML + continue, we send an explicit message first.
+    await client.messages.create({
+        from: To,
+        to: From,
+        body: "🔍 TathyaSetu is verifying this claim... Please wait."
+    });
+
+    // 6. Initialize Gemini
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const modelId = "gemini-3-flash-preview";
 
-    // 5. Initialize Twilio Client
-    const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
-
-    // 6. Gemini Analysis Logic
+    // 7. Gemini Analysis Logic
     const promptText = `
       Analyze for misinformation. Output JSON.
       Instructions:
@@ -41,7 +51,7 @@ export default async function handler(req, res) {
          - confidence: 0-100
          - summary: ONE short sentence.
          - keyPoints: Array of max 3 short bullet points.
-      Input Text: "${Body}"
+      Input Text: "${Body || "[Media Content]"}"
     `;
 
     const response = await ai.models.generateContent({
@@ -95,7 +105,7 @@ export default async function handler(req, res) {
     }
     const uniqueSources = [...new Set(sources)].slice(0, 3);
 
-    // 7. Format WhatsApp Message
+    // 8. Format WhatsApp Message
     let emoji = '❓';
     if (finalResult.verdict === 'TRUE') emoji = '✅';
     if (finalResult.verdict === 'FALSE') emoji = '❌';
@@ -109,7 +119,7 @@ export default async function handler(req, res) {
       `*Key Findings:*\n${(finalResult.keyPoints || []).map(p => `• ${p}`).join('\n')}\n\n` +
       `*Verified Sources:*\n${uniqueSources.length > 0 ? uniqueSources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
 
-    // 8. Send Reply via Twilio
+    // 9. Send Reply via Twilio
     await client.messages.create({
       from: To,
       to: From,
