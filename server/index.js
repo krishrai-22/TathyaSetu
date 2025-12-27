@@ -34,7 +34,7 @@ app.post('/webhook', (req, res) => {
 
   console.log(`📩 Webhook received from ${From}`);
 
-  // 1. IMMEDIATE ACKNOWLEDGEMENT
+  // 1. IMMEDIATE ACKNOWLEDGEMENT to prevent Twilio Timeout
   res.type('text/xml').send('<Response></Response>');
 
   // 2. ASYNC PROCESSING
@@ -57,21 +57,26 @@ app.post('/webhook', (req, res) => {
       // Analyze
       const analysis = await analyzeWithGemini(textBody, hasMedia ? MediaUrl0 : null, hasMedia ? MediaContentType0 : null);
       
-      // Format the response
+      if (!analysis) {
+        throw new Error("Analysis returned null/undefined");
+      }
+
+      // Format the response (WhatsApp supports Markdown)
       let emoji = '❓';
       if (analysis.verdict === 'TRUE') emoji = '✅';
       if (analysis.verdict === 'FALSE') emoji = '❌';
       if (analysis.verdict === 'MISLEADING') emoji = '⚠️';
       if (analysis.verdict === 'SATIRE') emoji = '🎭';
+      if (analysis.verdict === 'UNVERIFIED') emoji = '🔍';
 
       const reply = `*TathyaSetu Report* ${emoji}\n\n` +
         `*Verdict:* ${analysis.verdict}\n` +
         `*Confidence:* ${analysis.confidence}%\n\n` +
         `_${analysis.summary}_\n\n` +
-        `*Key Findings:*\n${analysis.keyPoints.map(p => `• ${p}`).join('\n')}\n\n` +
-        `*Verified Sources:*\n${analysis.sources.length > 0 ? analysis.sources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
+        `*Key Findings:*\n${(analysis.keyPoints || []).map(p => `• ${p}`).join('\n')}\n\n` +
+        `*Verified Sources:*\n${analysis.sources && analysis.sources.length > 0 ? analysis.sources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
 
-      // Send reply
+      // Send reply via Twilio API
       await client.messages.create({
         from: To,
         to: From,
@@ -87,7 +92,7 @@ app.post('/webhook', (req, res) => {
           await client.messages.create({
               from: To,
               to: From,
-              body: "⚠️ Sorry, I encountered an error while analyzing that. Please try again later."
+              body: "⚠️ Sorry, I encountered an error while analyzing that. Please try again."
           });
       } catch(e) { 
         console.error("Failed to send error notification:", e);
@@ -114,8 +119,9 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
   // 1. Handle Media (Images/Audio)
   if (mediaUrl && mediaType) {
       try {
+          console.log("Downloading media...", mediaUrl);
           // Download media from Twilio URL
-          const mediaResponse = await axios.get(mediaUrl, { responseType: 'arraybuffer' });
+          const mediaResponse = await axios.get(mediaUrl, { responseType: 'arraybuffer', timeout: 10000 });
           const base64Data = Buffer.from(mediaResponse.data).toString('base64');
           
           parts.push({
@@ -125,13 +131,13 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
               }
           });
           
-          // Add specific prompt for media
           let context = text ? `Context provided by user: "${text}"` : "No text context provided.";
           parts.push({ text: `${basePrompt}\n\nTask: Analyze the claims, visuals, or audio in this file. ${context}` });
           
       } catch (e) {
           console.error("Failed to download media:", e.message);
-          throw new Error("Failed to process media attachment.");
+          // Fallback to text analysis if media fails
+          parts.push({ text: `${basePrompt}\n\n[Media Download Failed]. Input Text: "${text}"` });
       }
   } 
   // 2. Handle URL
@@ -143,41 +149,60 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
       parts.push({ text: `${basePrompt}\n\nInput Text: "${text}"` });
   }
 
-  const response = await ai.models.generateContent({
-    model: modelId,
-    contents: { parts: parts },
-    config: {
-      tools: [{ googleSearch: {} }],
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          verdict: { type: Type.STRING, enum: ["TRUE", "FALSE", "MISLEADING", "UNVERIFIED", "SATIRE"] },
-          confidence: { type: Type.NUMBER },
-          summary: { type: Type.STRING },
-          keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+  try {
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: { parts: parts },
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            verdict: { type: Type.STRING, enum: ["TRUE", "FALSE", "MISLEADING", "UNVERIFIED", "SATIRE"] },
+            confidence: { type: Type.NUMBER },
+            summary: { type: Type.STRING },
+            keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+          },
         },
       },
-    },
-  });
-
-  const result = JSON.parse(response.text);
-  
-  // Extract Sources
-  const sources = [];
-  const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-  if (chunks) {
-    chunks.forEach((chunk) => {
-      if (chunk.web && chunk.web.uri) {
-        if (!chunk.web.uri.match(/reddit\.com|twitter\.com|x\.com|facebook\.com|instagram\.com/i)) {
-             sources.push(chunk.web.uri);
-        }
-      }
     });
+
+    // Robust JSON Parsing
+    let rawText = response.text || "{}";
+    
+    // Clean up Markdown code blocks if present (e.g. ```json ... ```)
+    rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    let result;
+    try {
+        result = JSON.parse(rawText);
+    } catch (e) {
+        console.error("Failed to parse JSON response:", rawText);
+        throw new Error("Invalid format received from AI");
+    }
+    
+    // Extract Sources
+    const sources = [];
+    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    if (chunks) {
+      chunks.forEach((chunk) => {
+        if (chunk.web && chunk.web.uri) {
+          // Filter out noisy social media links
+          if (!chunk.web.uri.match(/reddit\.com|twitter\.com|x\.com|facebook\.com|instagram\.com/i)) {
+               sources.push(chunk.web.uri);
+          }
+        }
+      });
+    }
+    
+    const uniqueSources = [...new Set(sources)].slice(0, 3);
+    return { ...result, sources: uniqueSources };
+
+  } catch (error) {
+    console.error("Gemini API Error:", error.message);
+    throw error;
   }
-  
-  const uniqueSources = [...new Set(sources)].slice(0, 3);
-  return { ...result, sources: uniqueSources };
 }
 
 app.listen(PORT || 3000, () => {
