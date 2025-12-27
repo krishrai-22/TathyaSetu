@@ -5,7 +5,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import axios from 'axios';
 
 // Load env vars from root directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -39,43 +38,35 @@ const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 const modelId = "gemini-3-flash-preview";
 
 app.post('/webhook', (req, res) => {
-  const { Body, From, To, NumMedia, MediaUrl0, MediaContentType0 } = req.body;
+  const { Body, From, To } = req.body;
 
   console.log(`📩 Webhook received from ${From}`);
 
-  const hasMedia = parseInt(NumMedia) > 0;
   const textBody = Body || "";
 
   // Filter out empty messages early
-  if (!hasMedia && !textBody.trim()) {
+  if (!textBody.trim()) {
     console.log("Empty message ignored.");
     return res.type('text/xml').send('<Response></Response>');
   }
 
   // 1. IMMEDIATE FEEDBACK: Send "Analyzing" message via TwiML
-  // This acts as the "typing" indicator or immediate acknowledgement
   const twiml = new twilio.twiml.MessagingResponse();
   twiml.message("🔍 TathyaSetu is verifying this claim... Please wait.");
   res.type('text/xml').send(twiml.toString());
 
   // 2. PROCESS LOGIC (Fire and Forget)
-  processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaContentType0 })
+  processMessage({ Body, From, To })
     .catch(err => console.error("❌ Fatal Error in processMessage:", err));
 });
 
-async function processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaContentType0 }) {
+async function processMessage({ Body, From, To }) {
     try {
-      const hasMedia = parseInt(NumMedia) > 0;
       const textBody = Body || "";
-      const isUrl = textBody.match(/https?:\/\/[^\s]+/);
-
-      // Log input type
-      if (hasMedia) console.log(`📷 Media received: ${MediaContentType0}`);
-      else if (isUrl) console.log(`🔗 URL received: ${textBody}`);
-      else console.log(`📝 Text received: "${textBody.substring(0, 50)}..."`);
+      console.log(`📝 Text received: "${textBody.substring(0, 50)}..."`);
       
-      // Analyze
-      const analysis = await analyzeWithGemini(textBody, hasMedia ? MediaUrl0 : null, hasMedia ? MediaContentType0 : null);
+      // Analyze (Text Only)
+      const analysis = await analyzeWithGemini(textBody);
       
       // Format the response (WhatsApp supports Markdown)
       let emoji = '❓';
@@ -89,8 +80,7 @@ async function processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaConten
         `*Verdict:* ${analysis.verdict}\n` +
         `*Confidence:* ${analysis.confidence || 0}%\n\n` +
         `_${analysis.summary || 'No summary available.'}_\n\n` +
-        `*Key Findings:*\n${(analysis.keyPoints && analysis.keyPoints.length > 0) ? analysis.keyPoints.map(p => `• ${p}`).join('\n') : '• No key points generated.'}\n\n` +
-        `*Verified Sources:*\n${analysis.sources && analysis.sources.length > 0 ? analysis.sources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
+        `*Key Findings:*\n${(analysis.keyPoints && analysis.keyPoints.length > 0) ? analysis.keyPoints.map(p => `• ${p}`).join('\n') : '• No key points generated.'}`;
 
       // Send reply via Twilio API
       await client.messages.create({
@@ -117,10 +107,8 @@ async function processMessage({ Body, From, To, NumMedia, MediaUrl0, MediaConten
     }
 }
 
-async function analyzeWithGemini(text, mediaUrl, mediaType) {
-  let parts = [];
-  
-  // Base instructions for all inputs
+async function analyzeWithGemini(text) {
+  // Base instructions
   const basePrompt = `
     Analyze this content for misinformation. Output JSON.
     Instructions:
@@ -132,39 +120,13 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
        - keyPoints: Array of exactly 3 short bullet points.
   `;
 
-  // 1. Handle Media (Images/Audio)
-  if (mediaUrl && mediaType) {
-      try {
-          console.log("Downloading media...", mediaUrl);
-          // Download media from Twilio URL
-          const mediaResponse = await axios.get(mediaUrl, { 
-            responseType: 'arraybuffer', 
-            timeout: 15000,
-            maxContentLength: 20 * 1024 * 1024 // 20MB max
-          });
-          const base64Data = Buffer.from(mediaResponse.data).toString('base64');
-          
-          parts.push({
-              inlineData: {
-                  data: base64Data,
-                  mimeType: mediaType
-              }
-          });
-          
-          let context = text ? `Context provided by user: "${text}"` : "No text context provided.";
-          parts.push({ text: `${basePrompt}\n\nTask: Analyze the claims, visuals, or audio in this file. ${context}` });
-          
-      } catch (e) {
-          console.error("Failed to download media:", e.message);
-          // Fallback to text analysis if media fails
-          parts.push({ text: `${basePrompt}\n\n[Media Download Failed]. Input Text: "${text}"` });
-      }
-  } 
-  // 2. Handle URL
-  else if (text && text.match(/https?:\/\/[^\s]+/)) {
+  let parts = [];
+  
+  // Handle URL
+  if (text && text.match(/https?:\/\/[^\s]+/)) {
       parts.push({ text: `${basePrompt}\n\nTask: Verify the credibility and accuracy of the content at this link: "${text}".` });
   } 
-  // 3. Handle Plain Text
+  // Handle Plain Text
   else {
       parts.push({ text: `${basePrompt}\n\nInput Text: "${text}"` });
   }
@@ -191,8 +153,6 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
 
     // Robust JSON Parsing
     let rawText = response.text || "{}";
-    
-    // Clean up Markdown code blocks if present (e.g. ```json ... ```)
     rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let result = {};
@@ -200,10 +160,10 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
         result = JSON.parse(rawText);
     } catch (e) {
         console.error("Failed to parse JSON response:", rawText);
-        result = {}; // Ensure result is an object
+        result = {}; 
     }
 
-    // Default Fallbacks for missing fields
+    // Default Fallbacks
     const finalResult = {
         verdict: result.verdict || "UNVERIFIED",
         confidence: result.confidence || 0,
@@ -217,7 +177,6 @@ async function analyzeWithGemini(text, mediaUrl, mediaType) {
     if (chunks) {
       chunks.forEach((chunk) => {
         if (chunk.web && chunk.web.uri) {
-          // Filter out noisy social media links
           if (!chunk.web.uri.match(/reddit\.com|twitter\.com|x\.com|facebook\.com|instagram\.com/i)) {
                sources.push(chunk.web.uri);
           }

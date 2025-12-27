@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { analyzeContent } from '../services/gemini';
 import { FullAnalysisResponse, VerdictType } from '../types';
-import { CheckCircle2, XCircle, AlertTriangle, HelpCircle, Quote, Search, RotateCcw, Loader2, Info } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, HelpCircle, Quote, Search, RotateCcw, Loader2, Info, Link } from 'lucide-react';
 
 declare const chrome: any;
 
@@ -12,13 +12,24 @@ export const PopupApp: React.FC = () => {
   const [inputText, setInputText] = useState('');
 
   const triggerAnalysis = async (text: string) => {
-    if (!text.trim()) return;
+    const trimmed = text.trim();
+    if (!trimmed) return;
     setIsLoading(true);
     setError(null);
     setResult(null);
     
     try {
-      const data = await analyzeContent(text, 'en');
+      // Check if input is a URL
+      const isUrl = /^(https?:\/\/[^\s]+)/.test(trimmed);
+      let data;
+      
+      if (isUrl) {
+         // Use the object format for URL analysis as defined in services/gemini
+         data = await analyzeContent({ type: 'url', value: trimmed }, 'en');
+      } else {
+         data = await analyzeContent(trimmed, 'en');
+      }
+
       setResult(data);
     } catch (err: any) {
       setError(err.message);
@@ -91,6 +102,8 @@ export const PopupApp: React.FC = () => {
     }
   };
 
+  const isUrlInput = /^(https?:\/\/[^\s]+)/.test(inputText.trim());
+
   return (
     <div className="w-[350px] min-h-[400px] bg-white text-slate-900 font-sans flex flex-col relative overflow-hidden">
       
@@ -113,7 +126,9 @@ export const PopupApp: React.FC = () => {
         {isLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center space-y-4 animate-fade-in">
              <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-             <p className="text-sm font-medium text-slate-500 animate-pulse">Verifying facts...</p>
+             <p className="text-sm font-medium text-slate-500 animate-pulse">
+               {isUrlInput ? "Verifying link credibility..." : "Verifying facts..."}
+             </p>
           </div>
         ) : result ? (
           // Result View
@@ -144,20 +159,29 @@ export const PopupApp: React.FC = () => {
           // Input View
           <div className="flex-1 flex flex-col animate-fade-in">
             
-            {inputText ? (
+            {inputText && !isUrlInput ? (
                 <div className="mb-3 flex gap-2 p-3 bg-indigo-50 text-indigo-700 text-xs rounded-lg border border-indigo-100">
                     <Info className="w-4 h-4 shrink-0" />
                     <span>Text captured from page.</span>
                 </div>
-            ) : (
+            ) : null}
+
+            {isUrlInput && (
+                 <div className="mb-3 flex gap-2 p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
+                    <Link className="w-4 h-4 shrink-0" />
+                    <span>URL detected. Will verify link credibility.</span>
+                </div>
+            )}
+
+            {!inputText && (
                 <p className="text-sm text-slate-500 mb-3">
-                   Paste text below or select text on a webpage and right-click to verify.
+                   Paste text or URL below to verify.
                 </p>
             )}
 
             <textarea
               className="flex-1 w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none mb-4 text-slate-700 placeholder:text-slate-400"
-              placeholder="Paste claim here..."
+              placeholder="Paste text or https:// link here..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
             />

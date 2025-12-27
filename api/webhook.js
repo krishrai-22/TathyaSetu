@@ -18,11 +18,10 @@ export default async function handler(req, res) {
 
   try {
     // 3. Parse Twilio Incoming Data
-    const { Body, From, To, NumMedia } = req.body;
+    const { Body, From, To } = req.body;
     
-    const hasMedia = parseInt(NumMedia) > 0;
-
-    if (!Body && !hasMedia) {
+    if (!Body) {
+        // Ignore empty or media-only messages
         return res.status(200).send('OK'); 
     }
 
@@ -30,7 +29,6 @@ export default async function handler(req, res) {
     const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
     // 5. Send "Analyzing" Status Message
-    // Since Vercel functions can't send partial TwiML + continue, we send an explicit message first.
     await client.messages.create({
         from: To,
         to: From,
@@ -41,7 +39,7 @@ export default async function handler(req, res) {
     const ai = new GoogleGenAI({ apiKey: API_KEY });
     const modelId = "gemini-3-flash-preview";
 
-    // 7. Gemini Analysis Logic
+    // 7. Gemini Analysis Logic (Text Only)
     const promptText = `
       Analyze for misinformation. Output JSON.
       Instructions:
@@ -51,7 +49,7 @@ export default async function handler(req, res) {
          - confidence: 0-100
          - summary: ONE short sentence.
          - keyPoints: Array of max 3 short bullet points.
-      Input Text: "${Body || "[Media Content]"}"
+      Input Text: "${Body}"
     `;
 
     const response = await ai.models.generateContent({
@@ -116,8 +114,7 @@ export default async function handler(req, res) {
       `*Verdict:* ${finalResult.verdict}\n` +
       `*Confidence:* ${finalResult.confidence}%\n\n` +
       `_${finalResult.summary}_\n\n` +
-      `*Key Findings:*\n${(finalResult.keyPoints || []).map(p => `• ${p}`).join('\n')}\n\n` +
-      `*Verified Sources:*\n${uniqueSources.length > 0 ? uniqueSources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
+      `*Key Findings:*\n${(finalResult.keyPoints || []).map(p => `• ${p}`).join('\n')}`;
 
     // 9. Send Reply via Twilio
     await client.messages.create({
