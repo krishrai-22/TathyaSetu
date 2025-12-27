@@ -4,7 +4,6 @@
 
 Built with **React 19**, **Google Gemini 3 Flash**, and **Google Search Grounding**, it goes beyond simple database lookups by actively searching the live web to verify claims with high accuracy.
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react)
 ![Gemini](https://img.shields.io/badge/AI-Gemini%203%20Flash-8E75B2.svg)
 ![Twilio](https://img.shields.io/badge/WhatsApp-Twilio-F22F46.svg)
@@ -125,6 +124,4 @@ The project includes a serverless function in `api/webhook.js` designed for Verc
 └── vite.config.ts        # Vite Configuration
 ```
 
-## 🛡️ License
 
-This project is licensed under the MIT License.
