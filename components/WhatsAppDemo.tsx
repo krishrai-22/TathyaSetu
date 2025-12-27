@@ -128,8 +128,8 @@ export const WhatsAppDemo: React.FC<WhatsAppDemoProps> = ({ t, language, onClose
            <button onClick={onClose} className="text-[#aebac1]">
              <ArrowLeft className="w-6 h-6" />
            </button>
-           <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold shrink-0">
-             M
+           <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold shrink-0 overflow-hidden border border-white/10">
+             <img src="/logo.svg" alt="Bot" className="w-full h-full object-cover" />
            </div>
            <div className="flex-1 min-w-0">
              <h3 className="text-[#e9edef] font-medium truncate">TathyaSetu Bot</h3>

@@ -109,7 +109,10 @@ export const PopupApp: React.FC = () => {
       
       {/* Simple Header */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
-        <h1 className="font-bold text-lg tracking-tight text-indigo-600">TathyaSetu</h1>
+        <div className="flex items-center gap-2">
+            <img src="/logo.svg" alt="TS" className="w-6 h-6 rounded-full" />
+            <h1 className="font-bold text-lg tracking-tight text-indigo-600">TathyaSetu</h1>
+        </div>
         {result && (
            <button 
              onClick={() => setResult(null)} 
@@ -125,7 +128,10 @@ export const PopupApp: React.FC = () => {
         
         {isLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center space-y-4 animate-fade-in">
-             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+             <div className="relative">
+                 <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+                 <img src="/logo.svg" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
+             </div>
              <p className="text-sm font-medium text-slate-500 animate-pulse">
                {isUrlInput ? "Verifying link credibility..." : "Verifying facts..."}
              </p>

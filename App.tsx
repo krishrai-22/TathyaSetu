@@ -7,7 +7,7 @@ import { NewsSection } from './components/NewsSection';
 import { analyzeContent } from './services/gemini';
 import { FullAnalysisResponse, Language } from './types';
 import { translations } from './translations';
-import { Globe, Moon, Sun, Sparkles } from 'lucide-react';
+import { Globe, Moon, Sun } from 'lucide-react';
 
 const App: React.FC = () => {
   const [result, setResult] = useState<FullAnalysisResponse | null>(null);
@@ -72,10 +72,8 @@ const App: React.FC = () => {
       <header className="sticky top-0 z-50 transition-all duration-300 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.location.reload()}>
-            <div className="bg-indigo-600 p-1.5 rounded-lg">
-                <Sparkles className="w-5 h-5 text-white" />
-            </div>
+          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
+            <img src="/logo.svg" alt="TathyaSetu Logo" className="w-8 h-8 rounded-full shadow-sm" />
             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               {t.appTitle}
             </h1>
@@ -143,6 +141,9 @@ const App: React.FC = () => {
         {/* Hero / Intro */}
         {!result && !isLoading && (
           <div className="text-center mb-16">
+            <div className="flex justify-center mb-6">
+                 <img src="/logo.svg" alt="Logo" className="w-20 h-20 shadow-2xl rounded-full animate-bounce-slow" />
+            </div>
             <h2 className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
                 {t.heroTitle}
@@ -167,6 +168,9 @@ const App: React.FC = () => {
           <div className="w-full max-w-xl mx-auto mt-16 text-center space-y-8">
              <div className="relative w-24 h-24 mx-auto">
                 <div className="w-24 h-24 border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <img src="/logo.svg" className="w-12 h-12 opacity-50" alt="loading" />
+                </div>
              </div>
              <div className="space-y-2">
                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
