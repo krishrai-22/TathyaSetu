@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
     define: {
       // Vital: This replaces process.env.API_KEY in your code with the actual value during build
       'process.env.API_KEY': JSON.stringify(env.API_KEY)
+    },
+    build: {
+      chunkSizeWarningLimit: 2000,
     }
   };
 });

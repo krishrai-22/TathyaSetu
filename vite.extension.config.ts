@@ -76,6 +76,7 @@ export default defineConfig(({ mode }) => {
       'process.env.API_KEY': JSON.stringify(env.API_KEY || '')
     },
     build: {
+      chunkSizeWarningLimit: 2000,
       outDir: 'dist-extension',
       emptyOutDir: true,
       rollupOptions: {
