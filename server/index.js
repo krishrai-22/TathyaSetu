@@ -3,8 +3,12 @@ import bodyParser from 'body-parser';
 import twilio from 'twilio';
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// Load env vars from root directory
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 
@@ -24,59 +28,78 @@ const ai = new GoogleGenAI({ apiKey: API_KEY });
 const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 const modelId = "gemini-3-flash-preview";
 
-app.post('/webhook', async (req, res) => {
-  // Twilio sends 'Body', 'From', and 'To' in the request body
-  const { Body, From, To } = req.body;
+app.post('/webhook', (req, res) => {
+  const { Body, From, To, NumMedia } = req.body;
 
-  if (!Body) {
-    console.log("Received empty body or non-message request");
-    return res.status(200).send('No body'); 
-  }
+  console.log(`📩 Webhook received from ${From}`);
 
-  console.log(`📩 Message from ${From}: ${Body.substring(0, 50)}...`);
+  // 1. IMMEDIATE ACKNOWLEDGEMENT
+  // Respond to Twilio immediately with empty TwiML to prevent the 15s timeout.
+  // This tells Twilio "We received the message, stop waiting."
+  res.type('text/xml').send('<Response></Response>');
 
-  try {
-    const analysis = await analyzeWithGemini(Body);
-    
-    // Format the response (WhatsApp supports Markdown)
-    let emoji = '❓';
-    if (analysis.verdict === 'TRUE') emoji = '✅';
-    if (analysis.verdict === 'FALSE') emoji = '❌';
-    if (analysis.verdict === 'MISLEADING') emoji = '⚠️';
-    if (analysis.verdict === 'SATIRE') emoji = '🎭';
-
-    const reply = `*TathyaSetu Report* ${emoji}\n\n` +
-      `*Verdict:* ${analysis.verdict}\n` +
-      `*Confidence:* ${analysis.confidence}%\n\n` +
-      `_${analysis.summary}_\n\n` +
-      `*Key Findings:*\n${analysis.keyPoints.map(p => `• ${p}`).join('\n')}\n\n` +
-      `*Verified Sources:*\n${analysis.sources.length > 0 ? analysis.sources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
-
-    // Send reply via Twilio SDK
-    await client.messages.create({
-      from: To, // The Twilio Bot Number
-      to: From, // The User's Number
-      body: reply
-    });
-
-    console.log(`✅ Replied to ${From}`);
-    res.status(200).send('OK');
-
-  } catch (error) {
-    console.error("Error processing message:", error);
-    
-    // Attempt to send error message to user
+  // 2. ASYNC PROCESSING
+  // Process the AI logic in the background
+  (async () => {
     try {
+      // Basic input validation
+      if (parseInt(NumMedia) > 0 && !Body) {
+        // Media message without caption - currently not supported by this text-only bot logic
         await client.messages.create({
-            from: To,
-            to: From,
-            body: "⚠️ Sorry, I encountered an error while analyzing that. Please try again."
+          from: To,
+          to: From,
+          body: "📷 I see you sent media! Please provide a text caption or claim with it for me to analyze."
         });
-    } catch(e) { /* Ignore send error */ }
+        return;
+      }
 
-    // Return 200 to prevent Twilio from retrying indefinitely on logic errors
-    res.status(200).send('Error');
-  }
+      if (!Body || !Body.trim()) {
+        console.log("Empty body, ignoring.");
+        return;
+      }
+
+      console.log(`🔍 Analyzing: "${Body.substring(0, 50)}..."`);
+      
+      const analysis = await analyzeWithGemini(Body);
+      
+      // Format the response (WhatsApp supports Markdown)
+      let emoji = '❓';
+      if (analysis.verdict === 'TRUE') emoji = '✅';
+      if (analysis.verdict === 'FALSE') emoji = '❌';
+      if (analysis.verdict === 'MISLEADING') emoji = '⚠️';
+      if (analysis.verdict === 'SATIRE') emoji = '🎭';
+
+      const reply = `*TathyaSetu Report* ${emoji}\n\n` +
+        `*Verdict:* ${analysis.verdict}\n` +
+        `*Confidence:* ${analysis.confidence}%\n\n` +
+        `_${analysis.summary}_\n\n` +
+        `*Key Findings:*\n${analysis.keyPoints.map(p => `• ${p}`).join('\n')}\n\n` +
+        `*Verified Sources:*\n${analysis.sources.length > 0 ? analysis.sources.map(s => `🔗 ${s}`).join('\n') : 'No direct web sources found.'}`;
+
+      // Send reply via Twilio REST API
+      await client.messages.create({
+        from: To,
+        to: From,
+        body: reply
+      });
+
+      console.log(`✅ Replied to ${From}`);
+
+    } catch (error) {
+      console.error("❌ Error processing message:", error);
+      
+      // Attempt to send error message to user
+      try {
+          await client.messages.create({
+              from: To,
+              to: From,
+              body: "⚠️ Sorry, I encountered an error while analyzing that. Please try again later."
+          });
+      } catch(e) { 
+        console.error("Failed to send error notification:", e);
+      }
+    }
+  })();
 });
 
 async function analyzeWithGemini(input) {
