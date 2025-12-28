@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showMethodology, setShowMethodology] = useState(false);
   const [language, setLanguage] = useState<Language>('en');
+  const [prefilledText, setPrefilledText] = useState('');
   
   // Dark Mode State
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -48,7 +49,7 @@ const App: React.FC = () => {
   const scrollToInput = () => {
     const inputElement = document.getElementById('analyzer');
     if (inputElement) {
-      inputElement.scrollIntoView({ behavior: 'smooth' });
+      inputElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -57,6 +58,11 @@ const App: React.FC = () => {
     if (newsElement) {
       newsElement.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleNewsCheck = (headline: string) => {
+    setPrefilledText(headline);
+    scrollToInput();
   };
 
   return (
@@ -157,6 +163,7 @@ const App: React.FC = () => {
             onAnalyze={handleAnalyze} 
             isLoading={isLoading} 
             t={t}
+            initialValue={prefilledText}
             />
         </div>
 
@@ -192,7 +199,7 @@ const App: React.FC = () => {
         {result && <ResultCard data={result} t={t} currentLanguage={language} />}
         
         {/* News Section */}
-        <NewsSection language={language} t={t} />
+        <NewsSection language={language} t={t} onNewsCheck={handleNewsCheck} />
 
         {/* Promotional Section */}
         <PromoSection language={language} t={t} />

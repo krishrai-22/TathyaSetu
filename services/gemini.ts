@@ -197,7 +197,8 @@ export const analyzeContent = async (
 export const fetchTrendingNews = async (
   language: Language, 
   category: string = 'Trending',
-  count: number = 4
+  count: number = 4,
+  page: number = 1
 ): Promise<NewsItem[]> => {
   let region = "Global";
   if (language !== 'en') {
@@ -208,8 +209,10 @@ export const fetchTrendingNews = async (
   
   const langName = getLanguageName(language);
   
+  // Use page number to encourage variety in results
   const prompt = `
     Find ${count} "news.google.com" links for "${category}" news in ${region}.
+    This is batch #${page} of requests, so please try to find DIFFERENT or NEW articles than a standard request.
     Prefer articles in ${langName} if available, otherwise English.
     
     JSON Output:

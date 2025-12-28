@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Newspaper, RefreshCw, AlertCircle, Clock, ExternalLink } from 'lucide-react';
+import { Newspaper, RefreshCw, AlertCircle, Clock, ArrowUpRight } from 'lucide-react';
 import { fetchTrendingNews } from '../services/gemini';
 import { NewsItem, Language } from '../types';
 import { TranslationSchema } from '../translations';
@@ -7,13 +7,15 @@ import { TranslationSchema } from '../translations';
 interface NewsSectionProps {
   language: Language;
   t: TranslationSchema;
+  onNewsCheck: (headline: string) => void;
 }
 
-export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
+export const NewsSection: React.FC<NewsSectionProps> = ({ language, t, onNewsCheck }) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [category, setCategory] = useState('Trending');
+  const [page, setPage] = useState(1);
 
   const categories = [
     { id: 'Trending', label: t.newsCategories.trending },
@@ -29,11 +31,11 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
     { id: 'Entertainment', label: t.newsCategories.entertainment },
   ];
 
-  const loadNews = async (cat: string = category) => {
+  const loadNews = async (cat: string = category, pageNum: number = 1) => {
     setLoading(true);
     setError(false);
     try {
-      const items = await fetchTrendingNews(language, cat);
+      const items = await fetchTrendingNews(language, cat, 4, pageNum);
       setNews(items);
     } catch (e) {
       setError(true);
@@ -42,9 +44,17 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
     }
   };
 
+  // Reset page when category changes
   useEffect(() => {
-    loadNews();
+    setPage(1);
+    loadNews(category, 1);
   }, [language, category]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadNews(category, nextPage);
+  };
 
   return (
     <div id="news" className="w-full max-w-5xl mx-auto mt-20 mb-12 scroll-mt-24">
@@ -96,7 +106,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 font-medium text-lg">Failed to load news</p>
           <button 
-            onClick={() => loadNews()}
+            onClick={() => loadNews(category, page)}
             className="mt-6 px-6 py-2.5 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors inline-flex items-center gap-2 font-medium shadow-sm"
           >
             <RefreshCw className="w-4 h-4" />
@@ -108,29 +118,32 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
           {news.map((item, idx) => (
             <article 
               key={idx}
-              className="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full relative"
+              className="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full relative p-7"
             >
-              <a href={item.url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 z-10"></a>
-              <div className="p-7 flex flex-col h-full">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800">
-                    {item.source || 'News'}
-                  </span>
-                  <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                    <Clock className="w-3.5 h-3.5" />
-                    {item.publishedTime || 'Recent'}
-                  </span>
-                </div>
-                
-                <div className="block mb-4">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                    {item.title}
-                  </h3>
-                </div>
-                
-                <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed flex-1">
-                  {item.snippet}
-                </p>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800">
+                  {item.source || 'News'}
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                  <Clock className="w-3.5 h-3.5" />
+                  {item.publishedTime || 'Recent'}
+                </span>
+              </div>
+              
+              <div className="block mb-6 flex-1">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {item.title}
+                </h3>
+              </div>
+              
+              <div className="mt-auto">
+                <button 
+                  onClick={() => onNewsCheck(item.title)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold transition-all group-hover:shadow-md"
+                >
+                  <span>Check Headline</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </button>
               </div>
             </article>
           ))}
@@ -141,10 +154,10 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ language, t }) => {
         </div>
       )}
       
-      {!loading && !error && news.length > 0 && (
+      {!loading && !error && (
          <div className="mt-10 text-center">
              <button 
-                onClick={() => loadNews()}
+                onClick={handleLoadMore}
                 className="inline-flex items-center gap-2 px-8 py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-semibold transition-all border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md"
              >
                 <RefreshCw className="w-4 h-4" />
