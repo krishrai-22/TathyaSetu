@@ -12,7 +12,7 @@ It is designed to be accessible across multiple platforms: **Web App**, **WhatsA
 ## ✨ Features
 
 ### 🌐 Web Application
-*   **Multi-Modal Inputs:** Verify **Text**, **Media**, **Audio** (Speech-to-Text Analysis), and **URLs**.
+*   **Multi-Modal Inputs:** Verify **Text**, **Images** (OCR & Analysis), **Audio** (Speech-to-Text Analysis), and **URLs**.
 *   **Live Grounding:** actively searches the web for the latest news to verify claims, citing reliable sources like Reuters, AP, and .gov sites.
 *   **12 Indian Languages:** Full support (UI & Analysis) for **Hindi, English, Hinglish, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi, and Urdu**.
 *   **AI Text-to-Speech:** Listen to the fact-check report in the selected language.
@@ -113,7 +113,6 @@ This uses the file at `server/index.js` (useful for VPS like DigitalOcean/AWS).
 
 1.  Build the extension:
     ```bash
-    npm install typescript
     npm run build:extension
     ```
     This generates a `dist-extension` folder.
