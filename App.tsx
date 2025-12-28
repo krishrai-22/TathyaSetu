@@ -70,11 +70,11 @@ const App: React.FC = () => {
 
       {/* Header */}
       <header className="sticky top-0 z-50 transition-all duration-300 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
-            <img src="/logo.svg" alt="TathyaSetu Logo" className="w-8 h-8 rounded-full shadow-sm" />
-            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <div className="flex items-center gap-2 md:gap-3 group cursor-pointer shrink-0" onClick={() => window.location.reload()}>
+            <img src="/logo.svg" alt="TathyaSetu Logo" className="w-8 h-8 rounded-full shadow-sm shrink-0" />
+            <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-none">
               {t.appTitle}
             </h1>
           </div>
@@ -90,24 +90,24 @@ const App: React.FC = () => {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
             
             {/* Theme Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-full text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              className="p-2 rounded-full text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shrink-0"
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {/* Language Selector */}
-            <div className="relative group">
-               <Globe className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
+            <div className="relative group shrink-0">
+               <Globe className="w-3.5 h-3.5 md:w-4 md:h-4 absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                <select
                  value={language}
                  onChange={(e) => setLanguage(e.target.value as Language)}
-                 className="bg-slate-100 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 pl-9 pr-8 py-2 rounded-full border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors max-w-[150px]"
+                 className="bg-slate-100 dark:bg-slate-800 text-xs md:text-sm text-slate-700 dark:text-slate-200 pl-8 pr-6 md:pl-9 md:pr-8 py-1.5 md:py-2 rounded-full border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors max-w-[110px] md:max-w-[150px]"
                  aria-label="Select Language"
                >
                  <option value="en">English</option>
@@ -136,17 +136,17 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-6 pt-16 pb-24">
+      <main className="max-w-5xl mx-auto px-4 md:px-6 pt-16 pb-24">
         
         {/* Hero / Intro */}
         {!result && !isLoading && (
           <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
+            <h2 className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
                 {t.heroTitle}
               </span>
             </h2>
-            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
               {t.heroSubtitle}
             </p>
           </div>
