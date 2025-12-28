@@ -251,8 +251,14 @@ export const createChatSession = (language: Language = 'en', context?: AnalysisR
   const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API Key missing");
 
-  const langName = getLanguageName(language);
-  let instruction = `You are a friendly and expert AI assistant specializing in media literacy. Reply in ${langName}.`;
+  // Instruction logic: prioritized user language matching and structure.
+  let instruction = `You are a friendly and expert AI assistant specializing in media literacy.
+  
+  RULES:
+  1. Reply in the SAME LANGUAGE as the user's message. (e.g., if user asks in Hindi, reply in Hindi).
+  2. Use bullet points and clear structuring (Markdown) for readability.
+  3. Keep answers concise and relevant to the analysis context.
+  `;
   
   let contextPrompt = "";
   if (context) {

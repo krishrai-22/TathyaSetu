@@ -16,7 +16,9 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ t, language, analysisCon
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatSessionRef = useRef<Chat | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Use a ref for the scrollable container instead of a dummy element at the end
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Initialize chat session on mount
   useEffect(() => {
@@ -24,10 +26,16 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ t, language, analysisCon
     setMessages([{ role: 'model', text: t.chatContextIntro }]);
   }, [language, analysisContext, t.chatContextIntro]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll logic: modifying scrollTop of the container
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (containerRef.current) {
+        const { scrollHeight, clientHeight } = containerRef.current;
+        containerRef.current.scrollTo({
+            top: scrollHeight - clientHeight,
+            behavior: 'smooth'
+        });
+    }
+  }, [messages, isLoading]);
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -51,10 +59,24 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ t, language, analysisCon
     }
   };
 
+  // Simple formatter for bold text (e.g., **text**)
+  const formatText = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="flex flex-col h-[400px] bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div 
+        ref={containerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+      >
         {messages.map((msg, idx) => (
           <div
             key={idx}
@@ -66,13 +88,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ t, language, analysisCon
                 {msg.role === 'user' ? <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" /> : <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
             </div>
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                 msg.role === 'user'
                   ? 'bg-indigo-600 text-white rounded-tr-none'
                   : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-tl-none shadow-sm'
               }`}
             >
-              {msg.text}
+              {formatText(msg.text)}
             </div>
           </div>
         ))}
@@ -88,7 +110,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ t, language, analysisCon
               </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
