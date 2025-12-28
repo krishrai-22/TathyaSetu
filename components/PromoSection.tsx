@@ -1,5 +1,4 @@
 import React from 'react';
-import { Laptop } from 'lucide-react';
 import { TranslationSchema } from '../translations';
 import { Language } from '../types';
 
@@ -41,19 +40,12 @@ export const PromoSection: React.FC<PromoSectionProps> = ({ language, t }) => {
 
           {/* Extension Card */}
           <div className="group relative bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col items-center text-center hover:border-blue-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all duration-300 shadow-sm hover:shadow-md">
-            <div className="w-full max-w-xs mx-auto aspect-[3/4] sm:aspect-video bg-white dark:bg-slate-900 rounded-2xl mb-8 flex items-center justify-center border border-slate-200 dark:border-slate-800 relative overflow-hidden shadow-inner group-hover:scale-[1.02] transition-transform duration-500">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent"></div>
-              <div className="relative z-10 w-48 h-32 border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 rounded-lg shadow-xl overflow-hidden flex flex-col">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-700 border-b border-slate-300 dark:border-slate-600 flex items-center px-2 gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500/50"></div>
-                      <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/50"></div>
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500/50"></div>
-                  </div>
-                  <div className="flex-1 flex items-center justify-center relative">
-                      <Laptop className="w-10 h-10 text-blue-500" />
-                  </div>
-              </div>
-              <div className="absolute bottom-4 text-xs font-mono text-blue-500/50">Browser Extension</div>
+            <div className="w-full max-w-xs mx-auto mb-8 relative">
+              <img 
+                 src="/extension-demo.png" 
+                 alt="Web Extension Preview" 
+                 className="w-full h-auto rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 group-hover:scale-[1.02] transition-transform duration-500"
+               />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{t.promoExtensionTitle}</h3>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm md:text-base mb-6">{t.promoExtensionDesc}</p>
