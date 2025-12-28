@@ -39,7 +39,8 @@ export const PromoSection: React.FC<PromoSectionProps> = ({ language, t }) => {
           </div>
 
           {/* Extension Card */}
-          <div className="group relative bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col items-center text-center hover:border-blue-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all duration-300 shadow-sm hover:shadow-md">
+          <div className="group relative bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 flex flex-col items-center text-center hover:border-blue-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all duration-300 shadow-sm hover:shadow-md"
+          >
             <div className="w-full max-w-xs mx-auto mb-8 relative">
               <img 
                  src="/extension-demo.png" 
