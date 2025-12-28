@@ -113,6 +113,7 @@ This uses the file at `server/index.js` (useful for VPS like DigitalOcean/AWS).
 
 1.  Build the extension:
     ```bash
+    npm install typescript
     npm run build:extension
     ```
     This generates a `dist-extension` folder.
