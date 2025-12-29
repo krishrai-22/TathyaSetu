@@ -128,7 +128,7 @@ const enTranslation: TranslationSchema = {
   more: "More",
   getStarted: "Get Started",
   heroTitle: "AI-Powered Fact and Misinformation Checker",
-  heroSubtitle: "Instantly verify facts and detect misinformation in text and links.",
+  heroSubtitle: "Verify facts and detect misinformation across text, images, video, and audio instantly.",
   inputPlaceholder: "Paste text here to verify...",
   analyzing: "Analyzing...",
   verifyBtn: "Verify Facts",
