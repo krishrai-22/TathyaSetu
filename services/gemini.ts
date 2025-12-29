@@ -22,6 +22,24 @@ const getLanguageName = (lang: Language): string => {
   return map[lang] || "English";
 };
 
+// Helper: Convert File/Blob to Base64
+async function fileToGenerativePart(file: File | Blob): Promise<{ inlineData: { data: string; mimeType: string } }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = (reader.result as string).split(',')[1];
+      resolve({
+        inlineData: {
+          data: base64String,
+          mimeType: file.type,
+        },
+      });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 // PCM Decoding for TTS
 function decode(base64: string) {
   const binaryString = atob(base64);
@@ -53,8 +71,14 @@ export async function pcmToAudioBuffer(
   return buffer;
 }
 
+export type AnalyzeInput = 
+  | string 
+  | { type: 'url'; value: string }
+  | { type: 'file'; file: File }
+  | { type: 'audio-blob'; blob: Blob };
+
 export const analyzeContent = async (
-  input: string | { type: 'url'; value: string }, 
+  input: AnalyzeInput, 
   language: Language = 'en'
 ): Promise<FullAnalysisResponse> => {
   
@@ -79,11 +103,24 @@ export const analyzeContent = async (
     contentParts = [
       { text: `Context:\nText: "${input}"\n\n` + promptText }
     ];
-  } else if (typeof input === 'object' && input.type === 'url') {
-    // For URLs, we rely on Google Search grounding to find info about the link
-    contentParts = [
-      { text: `Verify the credibility of this link: "${input.value}". ` + promptText }
-    ];
+  } else if ('type' in input) {
+    if (input.type === 'url') {
+      contentParts = [
+        { text: `Verify the credibility of this link: "${input.value}". ` + promptText }
+      ];
+    } else if (input.type === 'file') {
+      const filePart = await fileToGenerativePart(input.file);
+      contentParts = [
+        filePart,
+        { text: `Analyze this media (image/video/audio) for misinformation or manipulation. ${promptText}` }
+      ];
+    } else if (input.type === 'audio-blob') {
+      const audioPart = await fileToGenerativePart(input.blob);
+      contentParts = [
+        audioPart,
+        { text: `Analyze this audio recording for factual accuracy. ${promptText}` }
+      ];
+    }
   }
 
   try {
@@ -97,7 +134,6 @@ export const analyzeContent = async (
     try {
       ai = new GoogleGenAI({ apiKey });
     } catch (e: any) {
-      // Catch specific SDK error if key is invalid/empty in a way that bypassed check
       if (e.message?.includes("API Key")) {
         throw new Error("Invalid API Key configuration. Check .env and rebuild.");
       }
@@ -131,7 +167,6 @@ export const analyzeContent = async (
 
     const result: AnalysisResult = JSON.parse(jsonText);
 
-    // Extract grounding sources
     const sources: GroundingSource[] = [];
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
 
@@ -158,7 +193,6 @@ export const analyzeContent = async (
     if (error.status === 429 || error.code === 429 || error.message?.includes('429')) {
          throw new Error("Quota exceeded. Please try again later.");
     }
-    // Pass through the clean message if it's our own error
     if (error.message && (error.message.includes("API Key") || error.message.includes("Quota"))) {
         throw error;
     }
@@ -181,7 +215,6 @@ export const fetchTrendingNews = async (
   
   const langName = getLanguageName(language);
   
-  // Use page number to encourage variety in results
   const prompt = `
     Find ${count} "news.google.com" links for "${category}" news in ${region}.
     This is batch #${page} of requests, so please try to find DIFFERENT or NEW articles than a standard request.
@@ -226,7 +259,6 @@ export const createChatSession = (language: Language = 'en', context?: AnalysisR
   const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API Key missing");
 
-  // Instruction logic: prioritized user language matching and structure.
   let instruction = `You are a friendly and expert AI assistant specializing in media literacy.
   
   RULES:
@@ -264,7 +296,6 @@ export const streamAudio = async function* (text: string, language: Language = '
     if (!apiKey) throw new Error("API Key missing");
     const ai = new GoogleGenAI({ apiKey });
 
-    // Use generateContentStream for significantly faster start time (TTFB)
     const responseStream = await ai.models.generateContentStream({
       model: ttsModel,
       contents: { parts: [{ text }] },

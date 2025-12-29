@@ -4,7 +4,7 @@ import { ResultCard } from './components/ResultCard';
 import { MethodologyModal } from './components/MethodologyModal';
 import { PromoSection } from './components/PromoSection';
 import { NewsSection } from './components/NewsSection';
-import { analyzeContent } from './services/gemini';
+import { analyzeContent, AnalyzeInput } from './services/gemini';
 import { FullAnalysisResponse, Language } from './types';
 import { translations } from './translations';
 import { Globe, Moon, Sun } from 'lucide-react';
@@ -31,7 +31,7 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleAnalyze = async (content: string | { type: 'url'; value: string }) => {
+  const handleAnalyze = async (content: AnalyzeInput) => {
     setIsLoading(true);
     setError(null);
     setResult(null);

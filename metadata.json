@@ -1,5 +1,7 @@
 {
   "name": "TathyaSetu",
   "description": "A professional AI-powered tool to analyze text for factual accuracy, bias, and misinformation using Google Search grounding.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
