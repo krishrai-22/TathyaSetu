@@ -22,28 +22,6 @@ const getLanguageName = (lang: Language): string => {
   return map[lang] || "English";
 };
 
-// Helper to convert File to GenerativePart
-async function fileToPart(file: File): Promise<{ inlineData: { data: string; mimeType: string } }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        const base64String = reader.result.split(',')[1];
-        resolve({
-          inlineData: {
-            data: base64String,
-            mimeType: file.type,
-          },
-        });
-      } else {
-        reject(new Error("Failed to read file"));
-      }
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 // PCM Decoding for TTS
 function decode(base64: string) {
   const binaryString = atob(base64);
@@ -76,7 +54,7 @@ export async function pcmToAudioBuffer(
 }
 
 export const analyzeContent = async (
-  input: string | File | { type: 'url'; value: string }, 
+  input: string | { type: 'url'; value: string }, 
   language: Language = 'en'
 ): Promise<FullAnalysisResponse> => {
   
@@ -100,12 +78,6 @@ export const analyzeContent = async (
     if (!input.trim()) throw new Error("Please enter text to analyze.");
     contentParts = [
       { text: `Context:\nText: "${input}"\n\n` + promptText }
-    ];
-  } else if (input instanceof File) {
-    const filePart = await fileToPart(input);
-    contentParts = [
-      filePart,
-      { text: `Analyze this media (image/audio/video) for misinformation. ` + promptText }
     ];
   } else if (typeof input === 'object' && input.type === 'url') {
     // For URLs, we rely on Google Search grounding to find info about the link

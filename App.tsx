@@ -31,7 +31,7 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleAnalyze = async (content: string | File | { type: 'url'; value: string }) => {
+  const handleAnalyze = async (content: string | { type: 'url'; value: string }) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
