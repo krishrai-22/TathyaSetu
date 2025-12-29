@@ -66,8 +66,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden transition-colors duration-500">
+    <div className="min-h-screen relative overflow-x-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-500 font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900/30">
       
+      {/* Ambient Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-200/20 dark:bg-indigo-500/10 blur-[120px]" />
+          <div className="absolute top-[20%] -right-[10%] w-[40%] h-[40%] rounded-full bg-blue-200/20 dark:bg-blue-500/10 blur-[120px]" />
+      </div>
+
       <MethodologyModal 
         isOpen={showMethodology} 
         onClose={() => setShowMethodology(false)}
@@ -75,33 +81,41 @@ const App: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-50 transition-all duration-300 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 transition-all duration-300 backdrop-blur-xl bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 supports-[backdrop-filter]:bg-white/60">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 md:gap-3 group cursor-pointer shrink-0" onClick={() => window.location.reload()}>
-            <img src="/logo.svg" alt="TathyaSetu Logo" className="w-8 h-8 rounded-full shadow-sm shrink-0" />
-            <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-none">
-              {t.appTitle}
-            </h1>
+          <div className="flex items-center gap-2.5 md:gap-3 group cursor-pointer shrink-0" onClick={() => window.location.reload()}>
+            <div className="relative w-8 h-8 md:w-10 md:h-10">
+                <div className="absolute inset-0 bg-indigo-600 rounded-xl rotate-3 group-hover:rotate-6 transition-transform opacity-20 dark:opacity-40"></div>
+                <img src="/logo.svg" alt="TathyaSetu Logo" className="relative w-full h-full rounded-xl shadow-sm shrink-0" />
+            </div>
+            <div className="flex flex-col">
+                <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+                {t.appTitle}
+                </h1>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 tracking-wider uppercase">AI Verifier</span>
+            </div>
           </div>
 
           {/* Nav */}
-          <nav className="hidden md:flex items-center gap-6">
-            <button onClick={scrollToNews} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+          <nav className="hidden md:flex items-center gap-8">
+            <button onClick={scrollToNews} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group">
                 {t.news}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"></span>
             </button>
-            <button onClick={() => setShowMethodology(true)} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+            <button onClick={() => setShowMethodology(true)} className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group">
                 {t.aboutMethodology}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover:w-full"></span>
             </button>
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             
             {/* Theme Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2 rounded-full text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shrink-0"
+              className="p-2.5 rounded-full text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shrink-0 active:scale-95"
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -109,11 +123,11 @@ const App: React.FC = () => {
 
             {/* Language Selector */}
             <div className="relative group shrink-0">
-               <Globe className="w-3.5 h-3.5 md:w-4 md:h-4 absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
+               <Globe className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
                <select
                  value={language}
                  onChange={(e) => setLanguage(e.target.value as Language)}
-                 className="bg-slate-100 dark:bg-slate-800 text-xs md:text-sm text-slate-700 dark:text-slate-200 pl-8 pr-6 md:pl-9 md:pr-8 py-1.5 md:py-2 rounded-full border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors max-w-[110px] md:max-w-[150px]"
+                 className="bg-slate-100 dark:bg-slate-800/80 text-sm font-medium text-slate-700 dark:text-slate-200 pl-9 pr-8 py-2.5 rounded-xl border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none appearance-none cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors max-w-[120px] md:max-w-[160px]"
                  aria-label="Select Language"
                >
                  <option value="en">English</option>
@@ -133,7 +147,7 @@ const App: React.FC = () => {
 
             <button 
               onClick={scrollToInput}
-              className="hidden sm:block bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-5 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-all"
+              className="hidden sm:flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
             >
               {t.getStarted}
             </button>
@@ -142,23 +156,31 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-4 md:px-6 pt-16 pb-24">
+      <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 pt-16 md:pt-24 pb-32">
         
         {/* Hero / Intro */}
         {!result && !isLoading && (
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
-                {t.heroTitle}
+          <div className="text-center mb-16 md:mb-24 animate-fade-in">
+             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-6 border border-indigo-100 dark:border-indigo-800">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                Powered by Gemini 3 Pro
+             </div>
+            <h2 className="text-4xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight leading-[1.1]">
+              <span className="block text-slate-900 dark:text-white">Verify Facts.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 dark:from-indigo-400 dark:via-purple-400 dark:to-indigo-400 animate-gradient bg-300%">
+                Defeat Misinformation.
               </span>
             </h2>
-            <p className="text-base md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
               {t.heroSubtitle}
             </p>
           </div>
         )}
 
-        <div>
+        <div className="transform transition-all duration-500">
             <InputForm 
             onAnalyze={handleAnalyze} 
             isLoading={isLoading} 
@@ -169,18 +191,19 @@ const App: React.FC = () => {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="w-full max-w-xl mx-auto mt-16 text-center space-y-8">
+          <div className="w-full max-w-xl mx-auto mt-20 text-center space-y-8 animate-fade-in">
              <div className="relative w-24 h-24 mx-auto">
-                <div className="w-24 h-24 border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-slate-100 dark:border-slate-800"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <img src="/logo.svg" className="w-12 h-12 opacity-50" alt="loading" />
+                    <img src="/logo.svg" className="w-10 h-10 opacity-80" alt="loading" />
                 </div>
              </div>
-             <div className="space-y-2">
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
+             <div className="space-y-3">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
                   {t.analyzing}
-                </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                </h3>
+                <p className="text-base text-slate-500 dark:text-slate-400">
                   {t.loadingMessage}
                 </p>
              </div>
@@ -189,9 +212,12 @@ const App: React.FC = () => {
 
         {/* Error State */}
         {error && (
-          <div className="w-full max-w-3xl mx-auto mt-8 p-6 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl text-red-600 dark:text-red-400 text-center">
-            <p className="font-bold text-lg mb-1">{t.errorTitle}</p>
-            <p className="text-sm opacity-90">{error}</p>
+          <div className="w-full max-w-3xl mx-auto mt-12 p-6 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl text-center backdrop-blur-sm">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚠️</span>
+            </div>
+            <p className="font-bold text-lg mb-2 text-red-700 dark:text-red-400">{t.errorTitle}</p>
+            <p className="text-sm text-red-600 dark:text-red-300 opacity-90">{error}</p>
           </div>
         )}
 
