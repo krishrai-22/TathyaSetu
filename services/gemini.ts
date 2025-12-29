@@ -58,8 +58,14 @@ export async function pcmToAudioBuffer(
   sampleRate: number,
   numChannels: number,
 ): Promise<AudioBuffer> {
-  // Create Int16Array view on the same buffer, respecting offset and length
-  const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.byteLength / 2);
+  // Ensure we have an even number of bytes for 16-bit PCM
+  if (data.byteLength % 2 !== 0) {
+      data = data.slice(0, data.byteLength - 1);
+  }
+
+  // Create Int16Array view. We copy the buffer to ensure alignment safety.
+  const dataInt16 = new Int16Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
+  
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
 
@@ -298,7 +304,7 @@ export const streamAudio = async function* (text: string, language: Language = '
     if (!apiKey) throw new Error("API Key missing");
     const ai = new GoogleGenAI({ apiKey });
 
-    // Ensure strict array structure for contents
+    // Ensure strict array structure for contents and Modality enum usage
     const responseStream = await ai.models.generateContentStream({
       model: ttsModel,
       contents: [{ parts: [{ text }] }],

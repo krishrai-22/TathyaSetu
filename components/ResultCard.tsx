@@ -101,6 +101,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
   const isPlayingRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioStackRef = useRef<AudioBufferSourceNode[]>([]);
+  const nextStartTimeRef = useRef<number>(0);
 
   useEffect(() => {
     setDisplayedResult(data.result);
@@ -147,13 +148,16 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
       // Init Audio Context without forcing sample rate (browser compatibility)
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioContextClass();
+      
+      // Critical: Resume context if suspended (common in browsers)
       if (ctx.state === 'suspended') {
           await ctx.resume();
       }
+      
       audioContextRef.current = ctx;
+      nextStartTimeRef.current = ctx.currentTime + 0.1; // Start slightly in future
       
       const stream = streamAudio(textToRead, currentLanguage);
-      let nextStartTime = ctx.currentTime + 0.1;
       
       for await (const chunk of stream) {
          if (!isPlayingRef.current) break;
@@ -164,10 +168,13 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
          source.buffer = buffer;
          source.connect(ctx.destination);
          
-         if (nextStartTime < ctx.currentTime) nextStartTime = ctx.currentTime;
+         // Schedule playback
+         if (nextStartTimeRef.current < ctx.currentTime) {
+             nextStartTimeRef.current = ctx.currentTime;
+         }
          
-         source.start(nextStartTime);
-         nextStartTime += buffer.duration;
+         source.start(nextStartTimeRef.current);
+         nextStartTimeRef.current += buffer.duration;
          
          audioStackRef.current.push(source);
          
@@ -179,18 +186,21 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
          };
       }
 
-      const timeRemaining = (nextStartTime - ctx.currentTime);
+      // Cleanup after playback finishes
+      const timeRemaining = (nextStartTimeRef.current - ctx.currentTime);
       if (timeRemaining > 0) {
           setTimeout(() => {
               if (isPlayingRef.current) {
                   stopAudio();
               }
-          }, timeRemaining * 1000 + 200);
+          }, timeRemaining * 1000 + 500);
+      } else {
+        setIsPlaying(false);
       }
 
     } catch (e) {
-      console.error(e);
-      alert("Failed to generate or play audio.");
+      console.error("Audio playback error:", e);
+      alert("Failed to play audio. Please ensure sound is enabled.");
       stopAudio();
     } finally {
       setIsGeneratingAudio(false);
@@ -201,11 +211,13 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
     isPlayingRef.current = false;
     setIsPlaying(false);
     
+    // Stop all active sources
     audioStackRef.current.forEach(source => {
         try { source.stop(); } catch(e) {}
     });
     audioStackRef.current = [];
     
+    // Close context to release resources
     if (audioContextRef.current) {
       if (audioContextRef.current.state !== 'closed') {
           audioContextRef.current.close().catch(console.error);
