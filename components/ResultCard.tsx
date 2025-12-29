@@ -18,7 +18,9 @@ import {
   Languages,
   MessageCircle,
   Square,
-  Loader2
+  Loader2,
+  ListChecks,
+  Info
 } from 'lucide-react';
 
 interface ResultCardProps {
@@ -33,51 +35,51 @@ const getVerdictIcon = (verdict: VerdictType, t: TranslationSchema) => {
   switch (verdict) {
     case VerdictType.TRUE:
       return {
-        color: 'text-green-700 dark:text-green-300',
-        gradient: 'from-green-50 to-emerald-100/50 dark:from-green-900/30 dark:to-emerald-900/10',
-        border: 'border-green-200 dark:border-green-800/50',
-        progress: 'bg-green-500',
-        icon: <CheckCircle2 className="w-12 h-12 text-green-600 dark:text-green-400" />,
+        theme: 'emerald',
+        color: 'text-emerald-700 dark:text-emerald-300',
+        bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+        border: 'border-emerald-200 dark:border-emerald-900',
+        icon: <CheckCircle2 className="w-full h-full text-emerald-600 dark:text-emerald-400" />,
         label: config.label,
         description: config.desc
       };
     case VerdictType.FALSE:
       return {
-        color: 'text-red-700 dark:text-red-300',
-        gradient: 'from-red-50 to-rose-100/50 dark:from-red-900/30 dark:to-rose-900/10',
-        border: 'border-red-200 dark:border-red-800/50',
-        progress: 'bg-red-500',
-        icon: <XCircle className="w-12 h-12 text-red-600 dark:text-red-400" />,
+        theme: 'rose',
+        color: 'text-rose-700 dark:text-rose-300',
+        bg: 'bg-rose-50 dark:bg-rose-950/30',
+        border: 'border-rose-200 dark:border-rose-900',
+        icon: <XCircle className="w-full h-full text-rose-600 dark:text-rose-400" />,
         label: config.label,
         description: config.desc
       };
     case VerdictType.MISLEADING:
       return {
-        color: 'text-orange-700 dark:text-orange-300',
-        gradient: 'from-orange-50 to-amber-100/50 dark:from-orange-900/30 dark:to-amber-900/10',
-        border: 'border-orange-200 dark:border-orange-800/50',
-        progress: 'bg-orange-500',
-        icon: <AlertTriangle className="w-12 h-12 text-orange-600 dark:text-orange-400" />,
+        theme: 'amber',
+        color: 'text-amber-700 dark:text-amber-300',
+        bg: 'bg-amber-50 dark:bg-amber-950/30',
+        border: 'border-amber-200 dark:border-amber-900',
+        icon: <AlertTriangle className="w-full h-full text-amber-600 dark:text-amber-400" />,
         label: config.label,
         description: config.desc
       };
     case VerdictType.SATIRE:
       return {
+        theme: 'purple',
         color: 'text-purple-700 dark:text-purple-300',
-        gradient: 'from-purple-50 to-violet-100/50 dark:from-purple-900/30 dark:to-violet-900/10',
-        border: 'border-purple-200 dark:border-purple-800/50',
-        progress: 'bg-purple-500',
-        icon: <Quote className="w-12 h-12 text-purple-600 dark:text-purple-400" />,
+        bg: 'bg-purple-50 dark:bg-purple-950/30',
+        border: 'border-purple-200 dark:border-purple-900',
+        icon: <Quote className="w-full h-full text-purple-600 dark:text-purple-400" />,
         label: config.label,
         description: config.desc
       };
     default:
       return {
+        theme: 'slate',
         color: 'text-slate-700 dark:text-slate-300',
-        gradient: 'from-slate-50 to-gray-100/50 dark:from-slate-900/50 dark:to-gray-900/30',
+        bg: 'bg-slate-50 dark:bg-slate-900/50',
         border: 'border-slate-200 dark:border-slate-800',
-        progress: 'bg-slate-500',
-        icon: <HelpCircle className="w-12 h-12 text-slate-600 dark:text-slate-400" />,
+        icon: <HelpCircle className="w-full h-full text-slate-600 dark:text-slate-400" />,
         label: config.label,
         description: config.desc
       };
@@ -142,8 +144,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
       
       const textToRead = `${verdictText}: ${config.label}. ${displayedResult.summary}. ${keyPointsText}: ${displayedResult.keyPoints.join('. ')}`;
       
+      // Init Audio Context without forcing sample rate (browser compatibility)
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioContextClass({sampleRate: 24000});
+      const ctx = new AudioContextClass();
+      if (ctx.state === 'suspended') {
+          await ctx.resume();
+      }
       audioContextRef.current = ctx;
       
       const stream = streamAudio(textToRead, currentLanguage);
@@ -152,6 +158,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
       for await (const chunk of stream) {
          if (!isPlayingRef.current) break;
 
+         // Pass 24000 explicitly as the source sample rate from Gemini
          const buffer = await pcmToAudioBuffer(chunk, ctx, 24000, 1);
          const source = ctx.createBufferSource();
          source.buffer = buffer;
@@ -240,20 +247,25 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
     { code: 'ur', label: 'Urdu' },
   ];
 
+  // Calculate Dash Offset for Circular Progress
+  const radius = 30;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (displayedResult.confidence / 100) * circumference;
+
   return (
-    <div className="w-full max-w-4xl mx-auto mt-12 space-y-12 pb-20 animate-slide-up">
+    <div className="w-full max-w-5xl mx-auto mt-12 space-y-8 pb-20 animate-slide-up">
       
-      {/* Action Bar Floating */}
+      {/* Floating Action Bar */}
       <div className="sticky top-24 z-20 flex justify-end">
-        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50">
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50 ring-1 ring-black/5">
            {/* Audio Button */}
            <button
               onClick={handlePlayAudio}
               disabled={isGeneratingAudio}
               className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all ${
                   isPlaying 
-                  ? 'bg-red-50 text-red-600 border border-red-100' 
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  ? 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-900/20 dark:border-rose-900 dark:text-rose-400' 
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
            >
               {isGeneratingAudio ? (
@@ -272,12 +284,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
            <div className="relative group">
               <button
                   disabled={isTranslating}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
               >
                   {isTranslating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
                   {isTranslating ? t.translating : t.translateTo}
               </button>
-              <div className="absolute right-0 top-full mt-2 w-48 max-h-60 overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 hidden group-hover:block scrollbar-thin">
+              <div className="absolute right-0 top-full mt-2 w-48 max-h-60 overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 hidden group-hover:block scrollbar-thin z-30">
                   {languages.map((lang) => (
                       <button 
                           key={lang.code}
@@ -289,164 +301,188 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                   ))}
               </div>
            </div>
+           
+           <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+           {/* Share */}
+           <button
+             onClick={handleCopy}
+             className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+           >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
+              {copied ? t.copied : t.shareReport}
+           </button>
         </div>
       </div>
 
-      {/* Main Verdict Card */}
-      <div 
-        className={`rounded-[32px] border ${config.border} bg-gradient-to-br ${config.gradient} p-8 md:p-12 shadow-xl shadow-slate-200/50 dark:shadow-none relative overflow-hidden transition-all duration-500`} 
-      >
-        <div className="absolute top-0 right-0 p-12 opacity-[0.03] dark:opacity-[0.05] transform scale-[2] pointer-events-none origin-top-right">
-          {config.icon}
-        </div>
-        
-        <div className="flex flex-col md:flex-row items-start gap-8 relative z-10">
-          <div className="shrink-0 pt-1">
-             <div className="p-4 bg-white/80 dark:bg-black/20 rounded-2xl shadow-sm border border-white/40 dark:border-white/5 backdrop-blur-sm">
-                {config.icon}
-             </div>
-          </div>
-          <div className="flex-1 w-full space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-widest opacity-60 mb-2 block text-slate-900 dark:text-white">Analysis Verdict</span>
-                <h2 className={`text-4xl md:text-5xl font-black tracking-tight ${config.color}`}>{config.label}</h2>
-              </div>
-              
-              <button
-                onClick={handleCopy}
-                className="self-start md:self-auto flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wide bg-white/60 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 rounded-xl border border-white/20 hover:border-white/50 transition-all text-slate-700 dark:text-slate-200 shadow-sm backdrop-blur-sm"
-              >
-                {copied ? <Check className="w-4 h-4 text-green-600 dark:text-green-400" /> : <Share2 className="w-4 h-4" />}
-                {copied ? t.copied : t.shareReport}
-              </button>
-            </div>
-            
-            <p className="text-slate-800 dark:text-slate-100 text-xl md:text-2xl leading-relaxed font-serif">
-              "{displayedResult.summary}"
-            </p>
-
-            {/* Confidence Meter */}
-            <div className="pt-2">
-                <div className="flex justify-between items-end mb-2">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.verificationScore}</span>
-                    <span className={`text-xl font-black ${config.color}`}>{displayedResult.confidence}%</span>
-                </div>
-                <div className="w-full h-3 bg-white/40 dark:bg-black/20 rounded-full overflow-hidden border border-white/20">
-                    <div 
-                        className={`h-full rounded-full transition-all duration-1000 ease-out ${config.progress} relative shadow-lg`}
-                        style={{ width: `${displayedResult.confidence}%` }}
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/30"></div>
-                    </div>
-                </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Staggered Content Grid */}
-      <div className="grid md:grid-cols-12 gap-6">
+      {/* Main Layout Grid */}
+      <div className="grid lg:grid-cols-12 gap-8">
           
-          {/* Detailed Analysis (Spans 8 cols) */}
-          <div 
-            className="md:col-span-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-8 flex flex-col"
-          >
-            <div className="mb-6 flex items-center gap-3 pb-6 border-b border-slate-100 dark:border-slate-800">
-                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
-                    <ShieldAlert className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                  {t.detailedAnalysis}
-                </h3>
-            </div>
-            
-            <div className="prose prose-slate dark:prose-invert max-w-none">
-                <p className="text-slate-600 dark:text-slate-300 leading-8 text-lg font-light">
-                {displayedResult.detailedAnalysis}
-                </p>
-            </div>
+          {/* Left Column: Verdict & Summary (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
+              <div className={`
+                 relative overflow-hidden rounded-[32px] p-8 border ${config.border} ${config.bg}
+                 flex flex-col items-center text-center shadow-lg
+              `}>
+                  {/* Decorative BG Icon */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 opacity-5 pointer-events-none">
+                      {config.icon}
+                  </div>
 
-            {displayedResult.keyPoints && displayedResult.keyPoints.length > 0 && (
-              <div className="mt-10">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 pl-1">{t.keyFindings}</h4>
-                <div className="grid gap-3">
-                  {displayedResult.keyPoints.map((point, idx) => (
-                    <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-indigo-100 transition-colors">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold shrink-0 mt-0.5 shadow-sm shadow-indigo-200 dark:shadow-none">
-                        {idx + 1}
-                      </span>
-                      <span className="text-base text-slate-700 dark:text-slate-200 font-medium leading-relaxed">{point}</span>
-                    </div>
-                  ))}
-                </div>
+                  {/* Verdict Icon */}
+                  <div className="relative mb-6">
+                     <div className="absolute inset-0 bg-white dark:bg-slate-900 rounded-full blur-md opacity-50"></div>
+                     <div className="relative w-24 h-24 p-5 bg-white dark:bg-slate-900 rounded-3xl shadow-lg border border-white/20 dark:border-white/5 ring-1 ring-black/5">
+                        {config.icon}
+                     </div>
+                     <div className="absolute -bottom-3 -right-3 w-10 h-10 bg-slate-900 dark:bg-white rounded-full flex items-center justify-center text-white dark:text-slate-900 font-bold text-sm border-4 border-white dark:border-slate-900 shadow-sm">
+                        AI
+                     </div>
+                  </div>
+
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Verdict</span>
+                  <h2 className={`text-4xl font-black tracking-tight mb-2 ${config.color}`}>{config.label}</h2>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400 px-4">{config.description}</p>
+
+                  {/* Confidence Ring */}
+                  <div className="mt-8 flex flex-col items-center">
+                      <div className="relative w-24 h-24">
+                          <svg className="w-full h-full transform -rotate-90">
+                             <circle
+                               cx="48"
+                               cy="48"
+                               r={radius}
+                               fill="transparent"
+                               stroke="currentColor"
+                               strokeWidth="6"
+                               className="text-black/5 dark:text-white/5"
+                             />
+                             <circle
+                               cx="48"
+                               cy="48"
+                               r={radius}
+                               fill="transparent"
+                               stroke="currentColor"
+                               strokeWidth="6"
+                               strokeDasharray={circumference}
+                               strokeDashoffset={strokeDashoffset}
+                               strokeLinecap="round"
+                               className={`${config.color} transition-all duration-1000 ease-out`}
+                             />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <span className={`text-xl font-bold ${config.color}`}>{displayedResult.confidence}%</span>
+                          </div>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-2">{t.verificationScore}</span>
+                  </div>
               </div>
-            )}
+
+              {/* Chat CTA */}
+               {!showChat && (
+                <button
+                    onClick={() => setShowChat(true)}
+                    className="w-full p-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-3xl shadow-lg group hover:-translate-y-1 transition-transform"
+                >
+                    <div className="bg-white dark:bg-slate-900 rounded-[22px] p-5 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                           <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-indigo-600 dark:text-indigo-400">
+                              <MessageCircle className="w-6 h-6" />
+                           </div>
+                           <div className="text-left">
+                               <div className="font-bold text-slate-900 dark:text-white">{t.chatAboutAnalysis}</div>
+                               <div className="text-xs text-slate-500 dark:text-slate-400">Ask follow-up questions</div>
+                           </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                           <Info className="w-4 h-4" />
+                        </div>
+                    </div>
+                </button>
+             )}
           </div>
 
-          {/* Sources Column (Spans 4 cols) */}
-          <div className="md:col-span-4 space-y-6">
-             {/* Verified Sources */}
-             <div 
-                className="bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 h-fit"
-             >
-                 <h3 className="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-wider mb-5">
+          {/* Right Column: Details & Sources (7 cols) */}
+          <div className="lg:col-span-7 space-y-6">
+              
+              {/* Summary Card */}
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                   <div className="absolute top-0 left-0 w-1 bg-indigo-500 h-full"></div>
+                   <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                       <ShieldAlert className="w-5 h-5 text-indigo-500" />
+                       Analysis Summary
+                   </h3>
+                   <p className="text-xl md:text-2xl leading-relaxed text-slate-700 dark:text-slate-200 font-medium">
+                       "{displayedResult.summary}"
+                   </p>
+              </div>
+
+              {/* Key Findings */}
+              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
+                   <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
+                       <ListChecks className="w-4 h-4" />
+                       {t.keyFindings}
+                   </h3>
+                   <div className="space-y-4">
+                      {displayedResult.keyPoints.map((point, idx) => (
+                        <div key={idx} className="flex gap-4">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 shadow-sm">
+                                {idx + 1}
+                            </span>
+                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{point}</p>
+                        </div>
+                      ))}
+                   </div>
+                   
+                   <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700/50">
+                       <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">{t.detailedAnalysis}</h4>
+                       <p className="text-slate-600 dark:text-slate-400 text-sm leading-7">
+                           {displayedResult.detailedAnalysis}
+                       </p>
+                   </div>
+              </div>
+
+              {/* Sources */}
+              <div>
+                 <h3 className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 pl-2">
                     <TrendingUp className="w-4 h-4" />
                     {t.verifiedSources}
                  </h3>
-                 
-                 <div className="space-y-3">
+                 <div className="grid sm:grid-cols-2 gap-3">
                     {sources && sources.length > 0 ? sources.map((source, idx) => (
                         <a 
                             key={idx}
                             href={source.uri}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all group"
+                            className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md transition-all group"
                         >
-                            <div className="mt-1 w-6 h-6 rounded bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400">
-                                <ExternalLink className="w-3.5 h-3.5" />
+                            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                                <ExternalLink className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                     {source.title || new URL(source.uri || '').hostname}
                                 </p>
-                                <p className="text-xs text-slate-400 truncate mt-0.5">
+                                <p className="text-[10px] text-slate-500 truncate">
                                     {new URL(source.uri || '').hostname}
                                 </p>
                             </div>
                         </a>
                     )) : (
-                        <div className="p-4 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                        <div className="col-span-full p-4 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                              <p className="text-sm text-slate-500">No direct web sources found.</p>
                         </div>
                     )}
                  </div>
-             </div>
-
-             {/* Chat Trigger (if not showing) */}
-             {!showChat && (
-                <button
-                    onClick={() => setShowChat(true)}
-                    className="w-full p-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-3xl shadow-xl shadow-indigo-200 dark:shadow-none hover:shadow-indigo-500/30 transition-all hover:-translate-y-1 group relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                    <div className="relative z-10 flex flex-col items-center">
-                        <div className="mb-3 p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                            <MessageCircle className="w-6 h-6" />
-                        </div>
-                        <div className="font-bold text-lg mb-1">{t.chatAboutAnalysis}</div>
-                        <div className="text-xs text-indigo-100 opacity-90">Deep dive into this result</div>
-                    </div>
-                </button>
-             )}
+              </div>
           </div>
       </div>
 
       {/* Contextual Chat Section (Expandable) */}
       {showChat && (
-        <div className="mt-8 bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-slide-up">
-             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+        <div className="mt-8 bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-slide-up ring-4 ring-indigo-500/10">
+             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-sm">
                  <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
                         <MessageCircle className="w-5 h-5" />

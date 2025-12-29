@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Type, Link, Image as ImageIcon, Video, Mic, Upload, StopCircle, Trash2, X, Search, Sparkles } from 'lucide-react';
+import { Type, Link, Image as ImageIcon, Video, Mic, Upload, StopCircle, Trash2, X, Search, Sparkles, FileAudio } from 'lucide-react';
 import { TranslationSchema } from '../translations';
 import { AnalyzeInput } from '../services/gemini';
 
@@ -119,9 +119,9 @@ export const InputForm: React.FC<InputFormProps> = ({
     switch (activeTab) {
       case 'text':
         return (
-          <div className="relative group">
+          <div className="relative group h-full">
             <textarea
-                className="w-full h-56 p-6 text-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-transparent border-none focus:ring-0 resize-none outline-none leading-relaxed transition-all"
+                className="w-full h-64 p-6 text-xl text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-transparent border-none focus:ring-0 resize-none outline-none leading-relaxed transition-all font-light"
                 placeholder={t.inputPlaceholder}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -131,7 +131,7 @@ export const InputForm: React.FC<InputFormProps> = ({
             {text && (
                  <button 
                   onClick={() => setText('')} 
-                  className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors opacity-0 group-hover:opacity-100"
+                  className="absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-slate-700/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all opacity-0 group-hover:opacity-100"
                   type="button"
                  >
                     <X className="w-4 h-4" />
@@ -141,18 +141,18 @@ export const InputForm: React.FC<InputFormProps> = ({
         );
       case 'url':
         return (
-          <div className="h-56 flex flex-col justify-center p-8">
+          <div className="h-64 flex flex-col justify-center items-center p-8">
             <div className={`
-              group flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border-2 transition-all duration-300
-              ${url ? 'border-indigo-500/30 ring-4 ring-indigo-500/10' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}
-              focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10
+              w-full max-w-xl group flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border-2 transition-all duration-300
+              ${url ? 'border-indigo-500/40 ring-4 ring-indigo-500/10' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'}
+              focus-within:border-indigo-500 dark:focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 shadow-sm
             `}>
-              <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl shadow-sm text-indigo-500">
+              <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm text-indigo-500">
                  <Link className="w-5 h-5" />
               </div>
               <input
                 type="url"
-                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400 font-medium text-lg"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400 font-medium text-lg h-full"
                 placeholder={t.pasteUrl}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -161,7 +161,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               {url && (
                 <button 
                   onClick={() => setUrl('')} 
-                  className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"
+                  className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors mr-1"
                   type="button"
                 >
                   <X className="w-4 h-4 text-slate-500" />
@@ -169,7 +169,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               )}
             </div>
             {url && !url.match(/^https?:\/\/.+\..+/) && (
-              <div className="flex items-center gap-2 mt-4 text-red-500 text-sm font-medium animate-fade-in pl-1">
+              <div className="flex items-center gap-2 mt-4 text-rose-500 text-sm font-medium animate-fade-in pl-1 bg-rose-50 dark:bg-rose-950/20 px-4 py-2 rounded-full">
                   <AlertCircle className="w-4 h-4" />
                   {t.invalidUrl}
               </div>
@@ -178,15 +178,16 @@ export const InputForm: React.FC<InputFormProps> = ({
         );
       case 'visual':
         return (
-          <div className="h-56 p-8 flex flex-col items-center justify-center">
+          <div className="h-64 p-8 flex flex-col items-center justify-center">
              {!selectedFile ? (
-               <label className="flex flex-col items-center gap-4 cursor-pointer p-8 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all w-full h-full justify-center group">
-                 <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-full text-indigo-500 group-hover:scale-110 transition-transform">
-                   <Upload className="w-6 h-6" />
+               <label className="flex flex-col items-center justify-center gap-4 cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all group relative overflow-hidden">
+                 <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 <div className="p-4 bg-white dark:bg-slate-800 rounded-full shadow-lg text-indigo-500 group-hover:scale-110 group-hover:text-indigo-600 transition-all z-10">
+                   <Upload className="w-8 h-8" />
                  </div>
-                 <div className="text-center">
-                   <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Click to upload Image or Video</p>
-                   <p className="text-xs text-slate-400 mt-1">Supports JPG, PNG, MP4</p>
+                 <div className="text-center z-10">
+                   <p className="text-lg font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Upload Image or Video</p>
+                   <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Supports JPG, PNG, MP4</p>
                  </div>
                  <input 
                    type="file" 
@@ -196,37 +197,46 @@ export const InputForm: React.FC<InputFormProps> = ({
                  />
                </label>
              ) : (
-               <div className="w-full h-full bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 flex items-center gap-4 relative border border-slate-200 dark:border-slate-700">
-                  <div className="w-20 h-20 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+               <div className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl p-4 flex items-center gap-5 relative border border-slate-200 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-none animate-scale-in">
+                  <div className="w-24 h-24 bg-slate-100 dark:bg-slate-900 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700">
                      {selectedFile.type.startsWith('image/') ? (
                        <img src={URL.createObjectURL(selectedFile)} alt="preview" className="w-full h-full object-cover" />
                      ) : (
-                       <Video className="w-8 h-8 text-slate-400" />
+                       <Video className="w-10 h-10 text-indigo-500" />
                      )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">{selectedFile.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <div className="flex-1 min-w-0 py-2">
+                    <p className="font-bold text-lg text-slate-800 dark:text-slate-100 truncate">{selectedFile.name}</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type.split('/')[1]}
+                    </p>
+                    <div className="flex items-center gap-2 mt-3 text-emerald-600 dark:text-emerald-400 text-xs font-bold bg-emerald-50 dark:bg-emerald-950/30 w-fit px-2 py-1 rounded">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Ready to analyze
+                    </div>
                   </div>
-                  <button onClick={() => setSelectedFile(null)} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors text-slate-400">
+                  <button onClick={() => setSelectedFile(null)} className="absolute top-2 right-2 p-2 hover:bg-rose-50 hover:text-rose-500 rounded-full transition-colors text-slate-400">
                     <Trash2 className="w-5 h-5" />
                   </button>
                </div>
              )}
-             {mediaError && <p className="text-red-500 text-sm mt-2">{mediaError}</p>}
+             {mediaError && <p className="text-rose-500 font-medium text-sm mt-3 bg-rose-50 dark:bg-rose-950/20 px-3 py-1 rounded-full">{mediaError}</p>}
           </div>
         );
       case 'audio':
         return (
-          <div className="h-56 p-8 flex flex-col items-center justify-center">
+          <div className="h-64 p-8 flex flex-col items-center justify-center">
              {!selectedFile && !recordedBlob ? (
-                <div className="grid grid-cols-2 gap-4 w-full h-full">
+                <div className="grid grid-cols-2 gap-6 w-full h-full">
                    {/* Upload Option */}
-                   <label className="flex flex-col items-center justify-center gap-3 cursor-pointer p-4 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full text-blue-500">
-                        <Upload className="w-5 h-5" />
+                   <label className="flex flex-col items-center justify-center gap-4 cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/20 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-all group">
+                      <div className="p-4 bg-white dark:bg-slate-900 rounded-full shadow-md text-blue-500 group-hover:text-blue-600 group-hover:scale-110 transition-all">
+                        <Upload className="w-6 h-6" />
                       </div>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Upload File</span>
+                      <div className="text-center">
+                        <span className="block font-bold text-slate-700 dark:text-slate-200">Upload Audio</span>
+                        <span className="text-xs text-slate-400">MP3, WAV, M4A</span>
+                      </div>
                       <input 
                         type="file" 
                         className="hidden" 
@@ -238,40 +248,52 @@ export const InputForm: React.FC<InputFormProps> = ({
                    {/* Record Option */}
                    <button 
                      onClick={isRecording ? stopRecording : startRecording}
-                     className={`flex flex-col items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${
+                     className={`flex flex-col items-center justify-center gap-4 rounded-2xl border-2 transition-all group ${
                        isRecording 
-                         ? 'border-red-400 bg-red-50 dark:bg-red-900/10' 
-                         : 'border-slate-300 dark:border-slate-700 hover:border-red-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                         ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/10' 
+                         : 'border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/20 hover:border-rose-400 hover:bg-rose-50/50 dark:hover:bg-rose-900/10'
                      }`}
                    >
-                      <div className={`p-3 rounded-full transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-red-50 dark:bg-red-900/20 text-red-500'}`}>
-                        {isRecording ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                      <div className={`p-4 rounded-full shadow-md transition-all ${isRecording ? 'bg-rose-500 text-white animate-pulse shadow-rose-500/30' : 'bg-white dark:bg-slate-900 text-rose-500 group-hover:scale-110'}`}>
+                        {isRecording ? <StopCircle className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                       </div>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {isRecording ? "Stop Recording" : "Record Audio"}
-                      </span>
+                      <div className="text-center">
+                        <span className={`block font-bold ${isRecording ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                            {isRecording ? "Stop Recording" : "Record Voice"}
+                        </span>
+                        <span className="text-xs text-slate-400">{isRecording ? "Listening..." : "Use Microphone"}</span>
+                      </div>
                    </button>
                 </div>
              ) : (
-                <div className="w-full h-full bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 flex items-center gap-4 relative border border-slate-200 dark:border-slate-700 justify-center">
-                    <div className="p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-full text-indigo-600 dark:text-indigo-400">
-                       <Mic className="w-8 h-8" />
+                <div className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl p-6 flex items-center gap-5 relative border border-slate-200 dark:border-slate-700 shadow-xl animate-scale-in">
+                    <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                       {selectedFile ? <FileAudio className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
                     </div>
-                    <div className="text-center">
-                       <p className="font-semibold text-slate-900 dark:text-white">
-                         {selectedFile ? selectedFile.name : "Recorded Audio"}
+                    <div className="flex-1">
+                       <p className="font-bold text-lg text-slate-900 dark:text-white">
+                         {selectedFile ? selectedFile.name : "Voice Recording"}
                        </p>
-                       <p className="text-xs text-slate-500 dark:text-slate-400">Ready to verify</p>
+                       <div className="flex items-center gap-2 mt-1">
+                           <div className="flex gap-1">
+                                <span className="w-1 h-3 bg-indigo-400 rounded-full"></span>
+                                <span className="w-1 h-4 bg-indigo-500 rounded-full"></span>
+                                <span className="w-1 h-2 bg-indigo-300 rounded-full"></span>
+                                <span className="w-1 h-5 bg-indigo-600 rounded-full"></span>
+                                <span className="w-1 h-3 bg-indigo-400 rounded-full"></span>
+                           </div>
+                           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 ml-2">Audio Captured</span>
+                       </div>
                     </div>
                     <button 
                       onClick={() => { setSelectedFile(null); setRecordedBlob(null); }} 
-                      className="absolute top-4 right-4 p-2 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors text-slate-400"
+                      className="p-2.5 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-500 rounded-full transition-colors text-slate-400"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
                 </div>
              )}
-             {mediaError && <p className="text-red-500 text-sm mt-2">{mediaError}</p>}
+             {mediaError && <p className="text-rose-500 font-medium text-sm mt-3">{mediaError}</p>}
           </div>
         );
       default: return null;
@@ -293,10 +315,10 @@ export const InputForm: React.FC<InputFormProps> = ({
   );
 
   return (
-    <div id="analyzer" className="w-full max-w-3xl mx-auto space-y-8 scroll-mt-32">
+    <div id="analyzer" className="w-full max-w-4xl mx-auto space-y-8 scroll-mt-32">
       {/* Segmented Control Tabs */}
       <div className="flex justify-center">
-        <div className="bg-white dark:bg-slate-900/80 p-1.5 rounded-full shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-800 flex gap-1 backdrop-blur-sm overflow-x-auto max-w-full">
+        <div className="bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-full shadow-inner border border-slate-200 dark:border-slate-700/50 flex gap-1 backdrop-blur-sm overflow-x-auto max-w-full">
           {[
             { id: 'text', icon: Type, label: 'Text' },
             { id: 'url', icon: Link, label: 'Link' },
@@ -308,13 +330,16 @@ export const InputForm: React.FC<InputFormProps> = ({
               onClick={() => { setActiveTab(tab.id as InputType); }}
               type="button"
               className={`
-                flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-300 outline-none select-none whitespace-nowrap
+                relative flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 outline-none select-none whitespace-nowrap z-10
                 ${activeTab === tab.id 
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md transform scale-100' 
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                  ? 'text-white shadow-lg shadow-indigo-500/20' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'}
               `}
             >
-              <tab.icon className="w-4 h-4" />
+              {activeTab === tab.id && (
+                  <div className="absolute inset-0 bg-indigo-600 rounded-full -z-10 animate-fade-in transition-all"></div>
+              )}
+              <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'stroke-[2.5]' : ''}`} />
               <span>{tab.label}</span>
             </button>
           ))}
@@ -323,59 +348,60 @@ export const InputForm: React.FC<InputFormProps> = ({
 
       <form onSubmit={handleSubmit} className="transform transition-all">
         <div className="relative group">
-          {/* Main Card */}
-          <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-300 group-hover:border-indigo-300 dark:group-hover:border-indigo-700/50">
+          
+          {/* Main Card with Glassmorphism */}
+          <div className="relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-[32px] shadow-2xl shadow-slate-200/40 dark:shadow-black/40 border border-slate-100 dark:border-slate-700/50 overflow-hidden transition-all duration-300">
             
             {/* Input Area */}
             {renderContent()}
 
             {/* Footer / Action Area */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-50/80 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 backdrop-blur-sm">
-              <div className="text-xs font-semibold text-slate-400 pl-2">
+            <div className="flex items-center justify-between px-8 py-5 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2 flex items-center gap-3">
                 {activeTab === 'text' && text.length > 0 && (
-                   <span className="flex items-center gap-2 animate-fade-in">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                   <span className="flex items-center gap-2 animate-fade-in text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                       {text.length} {t.chars}
                    </span>
                 )}
                 {isRecording && (
-                    <span className="flex items-center gap-2 animate-fade-in text-red-500">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                      </span>
-                      Recording...
+                    <span className="flex items-center gap-2 animate-fade-in text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded">
+                      <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping"></div>
+                      Recording Active
                     </span>
                 )}
+                <span className="hidden sm:inline-block opacity-60">
+                   {isLoading ? "Using Gemini 3 Pro..." : "Ready to verify"}
+                </span>
               </div>
               
               <button
                 type="submit"
                 disabled={getButtonDisabled()}
                 className={`
-                  flex items-center gap-2.5 px-8 py-3 rounded-xl font-bold text-white transition-all duration-300 transform
+                  flex items-center gap-2.5 px-8 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 transform shadow-xl
                   ${getButtonDisabled()
-                    ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed translate-y-0 opacity-70' 
-                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95'}
+                    ? 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed translate-y-0 opacity-70 shadow-none' 
+                    : 'bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95'}
                 `}
               >
                 {isLoading ? (
                   <>
-                    <Sparkles className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
+                    <Sparkles className="w-5 h-5 animate-spin" />
+                    <span className="tracking-wide">Analyzing...</span>
                   </>
                 ) : (
                   <>
-                    <Search className="w-4 h-4 stroke-[3]" />
-                    <span>{t.verifyBtn}</span>
+                    <Search className="w-5 h-5 stroke-[2.5]" />
+                    <span className="tracking-wide">{t.verifyBtn}</span>
                   </>
                 )}
               </button>
             </div>
           </div>
           
-          {/* Decor element */}
-          <div className={`absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-[26px] opacity-0 transition-opacity duration-300 -z-10 blur-sm ${!getButtonDisabled() && !isLoading ? 'group-hover:opacity-20' : ''}`}></div>
+          {/* Subtle Glow Behind Card */}
+          <div className={`absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 rounded-[36px] opacity-0 transition-opacity duration-500 -z-10 blur-xl ${!getButtonDisabled() && !isLoading ? 'group-hover:opacity-15' : ''}`}></div>
         </div>
       </form>
     </div>
