@@ -1,146 +1,179 @@
-# TathyaSetu (તથ્યસેતુ) 🌉
 
-**TathyaSetu** (Bridge to Truth) is a professional, AI-powered misinformation checker. It combines **Google Gemini 3** (Flash & Pro) with **Google Search Grounding** to provide real-time, evidence-based verification of text, images, audio, and URLs.
+<div align="center">
+  <img src="public/logo.svg" alt="TathyaSetu Logo" width="120" height="120" />
+  <h1>TathyaSetu (તથ્યસેતુ) 🌉</h1>
+  <p><strong>The Bridge to Truth in the Age of AI.</strong></p>
+  <p>A professional, multi-modal misinformation checker powered by <strong>Google Gemini 3</strong> and <strong>Google Search Grounding</strong>.</p>
 
-It is designed to be accessible across multiple platforms: **Web App**, **WhatsApp Bot**, and **Chrome Extension**.
+  <p>
+    <a href="#-features">Features</a> •
+    <a href="#-tech-stack">Tech Stack</a> •
+    <a href="#-getting-started">Getting Started</a> •
+    <a href="#-whatsapp-bot">WhatsApp Bot</a> •
+    <a href="#-chrome-extension">Extension</a>
+  </p>
 
-![React 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react)
-![Gemini 3](https://img.shields.io/badge/AI-Gemini%203%20Flash-8E75B2.svg)
-![Twilio](https://img.shields.io/badge/WhatsApp-Twilio-F22F46.svg)
-![Vite](https://img.shields.io/badge/Build-Vite-646CFF.svg?logo=vite)
+  ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
+  ![Gemini 3](https://img.shields.io/badge/AI-Gemini%203%20Flash-8E75B2?style=flat-square&logo=google&logoColor=white)
+  ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript&logoColor=white)
+  ![Twilio](https://img.shields.io/badge/WhatsApp-Twilio-F22F46?style=flat-square&logo=twilio&logoColor=white)
+  ![Vite](https://img.shields.io/badge/Build-Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+  ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+</div>
 
-## ✨ Features
+<br />
 
-### 🌐 Web Application
-*   **Multi-Modal Inputs:** Verify **Text**, **Images** (OCR & Analysis), **Audio** (Speech-to-Text Analysis), and **URLs**.
-*   **Live Grounding:** actively searches the web for the latest news to verify claims, citing reliable sources like Reuters, AP, and .gov sites.
-*   **12 Indian Languages:** Full support (UI & Analysis) for **Hindi, English, Hinglish, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi, and Urdu**.
-*   **AI Text-to-Speech:** Listen to the fact-check report in the selected language.
-*   **Conversational AI:** "Chat with the Verdict" widget allows users to ask follow-up questions about the analysis.
-*   **Trending News:** Auto-fetches fact-check worthy news based on the selected region.
+## 📖 About The Project
 
-### 💬 WhatsApp Bot (Twilio)
-*   Send any text or claim to the bot number.
-*   Receive an instant, structured report with:
-    *   Verdict (True/False/Misleading/Satire)
-    *   Confidence Score
-    *   Key Findings
-    *   Source Links
-*   Built on a serverless architecture (Vercel Functions) or standalone Node.js server.
+**TathyaSetu** attempts to solve the problem of viral misinformation in India and beyond by combining the reasoning capabilities of Large Language Models (LLMs) with the factual accuracy of real-time web search.
 
-### 🧩 Chrome Extension
-*   Context menu integration: Highlight text on any website > Right-click > **"Verify with TathyaSetu"**.
-*   Opens a popup with an instant AI analysis of the selected text.
+Unlike standard chatbots that hallucinate, TathyaSetu **actively browses the web** (Google Search Grounding) to verify claims against credible sources like Reuters, AP, and government portals.
+
+It is designed as a **Unified Verification Ecosystem** available on:
+1.  **Web Dashboard** (Deep Analysis)
+2.  **WhatsApp Bot** (Instant Mobile Checks)
+3.  **Chrome Extension** (Contextual Browser Checks)
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Key Features
 
-*   **Frontend:** React 19, Tailwind CSS, Lucide React, Vite
-*   **AI:** Google GenAI SDK (`gemini-3-flash-preview` for analysis, `gemini-2.5-flash-preview-tts` for audio)
-*   **Backend:** Node.js (Express) or Vercel Serverless Functions
-*   **Messaging:** Twilio API (WhatsApp)
+### 🧠 Advanced Analysis Engine
+*   **Multi-Modal Inputs:** Verify **Text**, **Images** (OCR & Context), **Audio** (Speech Analysis), and **URLs**.
+*   **Live Grounding:** Connects to Google Search to find real-time evidence.
+*   **Fact Check Database:** Automatically detects if a claim has *already* been debunked by organizations like Snopes, Alt News, or PolitiFact and links directly to them.
+
+### 🌏 Hyper-Localized for India
+*   **12 Languages:** Full support for **Hindi, English, Hinglish, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi, and Urdu**.
+*   **Speech-to-Text & Text-to-Speech:** Speak to the app in your local language and listen to the verdict audio generated by `gemini-2.5-flash-preview-tts`.
+
+### 🛠️ Developer Experience
+*   **Conversational Follow-up:** "Chat with the Verdict" allows users to interrogate the AI about its findings.
+*   **Trending News Feed:** Auto-fetches potential misinformation targets from Google News based on the selected region.
+
+---
+
+## 🏗️ Tech Stack
+
+| Component | Technology |
+| :--- | :--- |
+| **Frontend** | React 19, TypeScript, Tailwind CSS, Lucide React |
+| **Build Tool** | Vite (Custom configs for Web & Extension) |
+| **AI Model** | Google Gemini 3 Flash (Reasoning) & Gemini 2.5 (TTS) |
+| **Grounding** | Google Search Tool (Live API) |
+| **Backend** | Node.js / Vercel Serverless Functions |
+| **Messaging** | Twilio API (WhatsApp Integration) |
+
+---
+
+## 📂 Project Structure
+
+```bash
+tathyasetu/
+├── api/                  # Vercel Serverless Function (WhatsApp Webhook)
+├── server/               # Standalone Node.js Server (Alternative Bot backend)
+├── extension/            # Chrome Extension source (Manifest V3)
+├── src/
+│   ├── components/       # UI Components (ResultCard, InputForm, etc.)
+│   ├── services/         # Gemini API & Logic layers
+│   ├── translations.ts   # Localization for 12 languages
+│   └── types.ts          # TypeScript Definitions
+├── vite.config.ts        # Web Build Config
+└── vite.extension.config.ts # Extension Build Config
+```
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-*   **Node.js** (v18 or higher)
-*   **Google Gemini API Key** (Get it from [Google AI Studio](https://aistudio.google.com/))
-*   **Twilio Account** (Account SID & Auth Token) for WhatsApp features.
+### Prerequisites
+*   **Node.js** (v18+)
+*   **Google Gemini API Key** (Free tier available at [Google AI Studio](https://aistudio.google.com/))
+*   **Twilio Account** (Optional, for WhatsApp Bot)
 
-### 2. Installation
+### 1. Installation
+
 ```bash
 git clone https://github.com/yourusername/tathyasetu.git
 cd tathyasetu
 npm install
 ```
 
-### 3. Environment Variables
+### 2. Environment Configuration
+
 Create a `.env` file in the root directory:
 
 ```env
-# Required for Web App & Extension
+# Required for Web App, Extension, and Bot
 API_KEY=your_google_gemini_api_key
 
-# Required for WhatsApp Bot (Both Vercel and Standalone)
+# Required ONLY for WhatsApp Bot
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
 PORT=3000
 ```
 
-### 4. Running the Web App
+### 3. Run Web Application
+
 ```bash
 npm run dev
 ```
-Visit `http://localhost:5173`.
+Open `http://localhost:5173` in your browser.
 
 ---
 
 ## 🤖 WhatsApp Bot Setup
 
-You have two options to run the WhatsApp bot. Both require the same `.env` configuration.
+TathyaSetu includes a fully functional WhatsApp bot backend.
 
-### Option A: Vercel Serverless (Recommended)
-This uses the file at `api/webhook.js`.
-1.  Deploy the project to Vercel.
-2.  Add `API_KEY`, `TWILIO_ACCOUNT_SID`, and `TWILIO_AUTH_TOKEN` in Vercel Project Settings > Environment Variables.
-3.  In **Twilio Console** > **Messaging** > **WhatsApp Sandbox Settings**:
-    *   Set **"When a message comes in"** to `https://your-vercel-app.vercel.app/api/webhook` (Method: POST).
+### Option A: Vercel (Serverless) - *Recommended*
+1.  Deploy this repo to **Vercel**.
+2.  Add environment variables in Vercel settings.
+3.  In **Twilio Console > WhatsApp Sandbox Settings**:
+    *   Set **"When a message comes in"** to: `https://your-project.vercel.app/api/webhook`
 
-### Option B: Standalone Node Server
-This uses the file at `server/index.js` (useful for VPS like DigitalOcean/AWS).
-1.  Navigate to the server directory (or root if running merged):
+### Option B: Local / VPS (Node.js)
+1.  Run the standalone server:
     ```bash
-    # Install server dependencies first if not done
-    cd server
-    npm install
-    
-    # Run server (from root)
     node server/index.js
     ```
-2.  Use **ngrok** to expose your local port 3000:
+2.  Expose port 3000 via **ngrok**:
     ```bash
     ngrok http 3000
     ```
-3.  In **Twilio Console** > **Messaging** > **WhatsApp Sandbox Settings**:
-    *   Set **"When a message comes in"** to your ngrok URL: `https://your-ngrok-url.app/webhook` (Method: POST).
+3.  Set Twilio Webhook to your ngrok URL (`https://xyz.ngrok.io/webhook`).
 
 ---
 
-## 🧩 Chrome Extension Build
+## 🧩 Chrome Extension
 
-1.  Build the extension:
+Verify claims without leaving your tab.
+
+1.  **Build** the extension:
     ```bash
     npm run build:extension
     ```
-    This generates a `dist-extension` folder.
-2.  Load in Chrome:
+    *(This creates a `dist-extension` folder)*
+2.  **Install** in Chrome/Edge/Brave:
     *   Go to `chrome://extensions`
-    *   Enable **Developer Mode** (top right).
+    *   Enable **Developer Mode** (top right toggle).
     *   Click **Load unpacked**.
     *   Select the `dist-extension` folder.
+3.  **Usage**: Highlight text on any webpage → Right Click → **"Verify with TathyaSetu"**.
 
 ---
 
-## 📂 Project Structure
+## 🤝 Contributing
 
-```
-├── api/                  # Vercel Serverless Function (Twilio Webhook)
-├── server/               # Standalone Node.js Express Server (Twilio Bot)
-├── extension/            # Chrome Extension source (manifest, background, popup)
-├── components/           # React Components (InputForm, ResultCard, etc.)
-├── services/             # Gemini API integration & Logic
-├── translations.ts       # Localization for 12 languages
-├── App.tsx               # Main Web App Entry
-└── vite.config.ts        # Vite Config for Web
-└── vite.extension.config.ts # Vite Config for Extension
-```
+Contributions are welcome! Please follow these steps:
+1.  Fork the Project.
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
+4.  Push to the Branch (`git push origin feature/AmazingFeature`).
+5.  Open a Pull Request.
 
-## ⚠️ Notes regarding Build Warnings
-*   If you see `npm warn deprecated scmp`, this is a dependency of older Twilio versions. We have updated to `twilio@^5.0.0` to resolve this.
-*   `node-domexception` warnings are harmless transitive dependencies used by build tools.
+---
 
-## 🛡️ License
-MIT
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
