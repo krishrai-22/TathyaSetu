@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { VerdictType, FullAnalysisResponse, Language } from '../types';
+import { VerdictType, FullAnalysisResponse, Language, GroundingSource } from '../types';
 import { TranslationSchema } from '../translations';
 import { streamAudio, translateAnalysis, pcmToAudioBuffer } from '../services/gemini';
 import { ChatWidget } from './ChatWidget';
@@ -20,7 +20,11 @@ import {
   Square,
   Loader2,
   ListChecks,
-  Info
+  Info,
+  FileSearch,
+  Calendar,
+  Globe,
+  Search
 } from 'lucide-react';
 
 interface ResultCardProps {
@@ -28,6 +32,24 @@ interface ResultCardProps {
   t: TranslationSchema;
   currentLanguage: Language;
 }
+
+// Helper to check for "Trusted" domains (Government, Education, Major Fact Checkers)
+const isTrustedSource = (uri: string) => {
+    try {
+        const hostname = new URL(uri).hostname;
+        return hostname.endsWith('.gov') || 
+               hostname.endsWith('.edu') || 
+               hostname.endsWith('.nic.in') ||
+               hostname.includes('reuters') ||
+               hostname.includes('apnews') ||
+               hostname.includes('bbc') ||
+               hostname.includes('snopes') ||
+               hostname.includes('altnews') ||
+               hostname.includes('politifact');
+    } catch {
+        return false;
+    }
+};
 
 const getVerdictIcon = (verdict: VerdictType, t: TranslationSchema) => {
   const config = t.verdictLabels[verdict];
@@ -84,6 +106,58 @@ const getVerdictIcon = (verdict: VerdictType, t: TranslationSchema) => {
         description: config.desc
       };
   }
+};
+
+const SourceCard: React.FC<{ source: GroundingSource }> = ({ source }) => {
+    const hostname = source.uri ? new URL(source.uri).hostname : '';
+    const trusted = source.uri ? isTrustedSource(source.uri) : false;
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`;
+
+    return (
+        <a 
+            href={source.uri}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex flex-col p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300 h-full relative overflow-hidden"
+        >
+            <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 p-1.5 border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <img 
+                        src={faviconUrl} 
+                        alt="icon" 
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://www.google.com/s2/favicons?domain=google.com";
+                        }} 
+                    />
+                </div>
+                <div className="p-1.5 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:text-indigo-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-colors">
+                    <ExternalLink className="w-4 h-4" />
+                </div>
+            </div>
+
+            <div className="mb-1">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {source.title || hostname}
+                </h4>
+            </div>
+
+            <div className="mt-auto pt-2 flex items-center justify-between">
+                 <span className="text-xs text-slate-500 font-medium truncate max-w-[70%]">
+                    {hostname.replace('www.', '')}
+                 </span>
+                 {trusted && (
+                     <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900">
+                         <ShieldAlert className="w-3 h-3" />
+                         Trusted
+                     </span>
+                 )}
+            </div>
+            
+            {/* Hover Glow */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-3xl pointer-events-none"></div>
+        </a>
+    );
 };
 
 export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage }) => {
@@ -429,6 +503,45 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                    </p>
               </div>
 
+               {/* Existing Fact Checks Section (Google Fact Check Style) */}
+               {displayedResult.existingFactChecks && displayedResult.existingFactChecks.length > 0 && (
+                  <div className="bg-indigo-50 dark:bg-indigo-950/20 rounded-3xl p-6 border border-indigo-100 dark:border-indigo-900/50">
+                     <h3 className="text-sm font-bold text-indigo-800 dark:text-indigo-200 uppercase tracking-wider mb-4 flex items-center gap-2">
+                         <FileSearch className="w-4 h-4" />
+                         Fact Check Database
+                     </h3>
+                     <div className="space-y-4">
+                        {displayedResult.existingFactChecks.map((fc, i) => (
+                           <a key={i} href={fc.url} target="_blank" rel="noopener noreferrer" className="block bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors shadow-sm group">
+                              <div className="flex justify-between items-start mb-2">
+                                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1">
+                                    <span className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs">
+                                      {fc.factCheckerName.charAt(0)}
+                                    </span>
+                                    {fc.factCheckerName}
+                                 </div>
+                                 <div className="flex items-center gap-1 text-xs text-slate-400">
+                                    <Calendar className="w-3 h-3" />
+                                    {fc.date}
+                                 </div>
+                              </div>
+                              <h4 className="font-bold text-slate-900 dark:text-white mb-3 text-sm">
+                                " {fc.claim} "
+                              </h4>
+                              <div className="flex items-center gap-3">
+                                 <div className="text-xs text-slate-500 dark:text-slate-400">
+                                    Claim by <span className="font-semibold text-slate-700 dark:text-slate-300">{fc.claimant}</span>
+                                 </div>
+                                 <div className="ml-auto px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                                    Rating: <span className="text-indigo-600 dark:text-indigo-400">{fc.rating}</span>
+                                 </div>
+                              </div>
+                           </a>
+                        ))}
+                     </div>
+                  </div>
+               )}
+
               {/* Key Findings */}
               <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
@@ -454,36 +567,22 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                    </div>
               </div>
 
-              {/* Sources */}
+              {/* Improvised Sources Section */}
               <div>
                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 pl-2">
-                    <TrendingUp className="w-4 h-4" />
-                    {t.verifiedSources}
+                    <Globe className="w-4 h-4" />
+                    {t.verifiedSources} ({sources.length})
                  </h3>
                  <div className="grid sm:grid-cols-2 gap-3">
                     {sources && sources.length > 0 ? sources.map((source, idx) => (
-                        <a 
-                            key={idx}
-                            href={source.uri}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md transition-all group"
-                        >
-                            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
-                                <ExternalLink className="w-4 h-4" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                    {source.title || new URL(source.uri || '').hostname}
-                                </p>
-                                <p className="text-[10px] text-slate-500 truncate">
-                                    {new URL(source.uri || '').hostname}
-                                </p>
-                            </div>
-                        </a>
+                        <SourceCard key={idx} source={source} />
                     )) : (
-                        <div className="col-span-full p-4 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-                             <p className="text-sm text-slate-500">No direct web sources found.</p>
+                        <div className="col-span-full p-8 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center">
+                             <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 text-slate-400">
+                                <Search className="w-6 h-6" />
+                             </div>
+                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No specific web sources cited in metadata.</p>
+                             <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">The AI used its internal knowledge base or the search results didn't return direct links for this specific query.</p>
                         </div>
                     )}
                  </div>

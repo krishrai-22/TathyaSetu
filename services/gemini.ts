@@ -93,15 +93,21 @@ export const analyzeContent = async (
   const languageInstruction = getLanguageName(language);
   let promptText = `
     Analyze for misinformation. Output JSON in ${languageInstruction}.
+    
     Instructions:
     1. Use googleSearch to verify. FIND AND CITE AT LEAST 3 DISTINCT SOURCES.
-    2. Be EXTREMELY CONCISE.
-    3. Output Schema:
+    2. SPECIFICALLY search for existing fact-checks from organizations like Snopes, Alt News, Boom Live, PolitiFact, Vishvas News, etc.
+    3. If you find existing fact checks, populate the 'existingFactChecks' array.
+    4. **CRITICAL**: You MUST list the websites you used to verify this in the 'citedSources' array in JSON.
+    
+    Output Schema:
        - verdict: TRUE/FALSE/MISLEADING/UNVERIFIED/SATIRE
        - confidence: 0-100
        - summary: ONE short sentence.
        - detailedAnalysis: Max 2 sentences explaining why.
        - keyPoints: Array of max 3 short bullet points.
+       - citedSources: Array of { title, url } for the sources you found.
+       - existingFactChecks: Array of objects { claim: string, claimant: string, factCheckerName: string, rating: string, date: string, url: string } (Max 2 items).
   `;
   
   let contentParts: any[] = [];
@@ -162,6 +168,30 @@ export const analyzeContent = async (
             summary: { type: Type.STRING },
             detailedAnalysis: { type: Type.STRING },
             keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+            citedSources: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        url: { type: Type.STRING }
+                    }
+                }
+            },
+            existingFactChecks: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  claim: { type: Type.STRING },
+                  claimant: { type: Type.STRING },
+                  factCheckerName: { type: Type.STRING },
+                  rating: { type: Type.STRING },
+                  date: { type: Type.STRING },
+                  url: { type: Type.STRING },
+                }
+              }
+            }
           },
           required: ["verdict", "confidence", "summary", "detailedAnalysis", "keyPoints"],
         },
@@ -175,13 +205,15 @@ export const analyzeContent = async (
 
     const result: AnalysisResult = JSON.parse(jsonText);
 
-    const sources: GroundingSource[] = [];
+    // Merge Sources: Combine Grounding Metadata + Explicit JSON citations
+    const combinedSources: GroundingSource[] = [];
+    
+    // 1. From Grounding Metadata (API Tool)
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-
     if (chunks) {
       chunks.forEach((chunk: any) => {
         if (chunk.web) {
-          sources.push({
+          combinedSources.push({
             title: chunk.web.title || "Web Source",
             uri: chunk.web.uri,
           });
@@ -189,7 +221,20 @@ export const analyzeContent = async (
       });
     }
 
-    const uniqueSources = sources.filter((v, i, a) => a.findIndex(t => (t.uri === v.uri)) === i);
+    // 2. From Semantic JSON Output (Backup)
+    if (result.citedSources && Array.isArray(result.citedSources)) {
+        result.citedSources.forEach(s => {
+            combinedSources.push({
+                title: s.title,
+                uri: s.url
+            });
+        });
+    }
+
+    // Deduplicate based on URI
+    const uniqueSources = combinedSources.filter((v, i, a) => 
+        v.uri && a.findIndex(t => (t.uri === v.uri)) === i
+    );
 
     return {
       result,
@@ -364,6 +409,20 @@ export const translateAnalysis = async (
             summary: { type: Type.STRING },
             detailedAnalysis: { type: Type.STRING },
             keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+            existingFactChecks: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  claim: { type: Type.STRING },
+                  claimant: { type: Type.STRING },
+                  factCheckerName: { type: Type.STRING },
+                  rating: { type: Type.STRING },
+                  date: { type: Type.STRING },
+                  url: { type: Type.STRING },
+                }
+              }
+            }
           },
           required: ["verdict", "confidence", "summary", "detailedAnalysis", "keyPoints"],
         },
