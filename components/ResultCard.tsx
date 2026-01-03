@@ -339,16 +339,16 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
   const strokeDashoffset = circumference - (displayedResult.confidence / 100) * circumference;
 
   return (
-    <div className="w-full max-w-5xl mx-auto mt-12 space-y-8 pb-20 animate-slide-up">
+    <div className="w-full max-w-5xl mx-auto mt-8 md:mt-12 space-y-6 md:space-y-8 pb-20 animate-slide-up">
       
       {/* Floating Action Bar */}
-      <div className="sticky top-24 z-20 flex justify-end">
-        <div className="flex flex-wrap items-center gap-1 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50 ring-1 ring-black/5">
+      <div className="sticky top-16 md:top-24 z-20 flex justify-end pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-1 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-full shadow-lg border border-slate-200/50 dark:border-slate-700/50 ring-1 ring-black/5 overflow-x-auto max-w-full scrollbar-hide">
            {/* Audio Button */}
            <button
               onClick={handlePlayAudio}
               disabled={isGeneratingAudio}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all ${
+              className={`flex items-center gap-2 px-3 md:px-4 py-2 text-xs font-bold rounded-full transition-all whitespace-nowrap ${
                   isPlaying 
                   ? 'bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-900/20 dark:border-rose-900 dark:text-rose-400' 
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -364,13 +364,13 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
               {isGeneratingAudio ? t.generatingAudio : isPlaying ? t.stopAudio : t.listenToAnalysis}
            </button>
             
-           <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+           <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0"></div>
 
            {/* Translate Dropdown */}
-           <div className="relative group">
+           <div className="relative group shrink-0">
               <button
                   disabled={isTranslating}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                  className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all whitespace-nowrap"
               >
                   {isTranslating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
                   {isTranslating ? t.translating : t.translateTo}
@@ -388,12 +388,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
               </div>
            </div>
            
-           <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+           <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0"></div>
 
            {/* Share */}
            <button
              onClick={handleCopy}
-             className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+             className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all whitespace-nowrap shrink-0"
            >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5" />}
               {copied ? t.copied : t.shareReport}
@@ -402,12 +402,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
       </div>
 
       {/* Main Layout Grid */}
-      <div className="grid lg:grid-cols-12 gap-8">
+      <div className="grid lg:grid-cols-12 gap-6 md:gap-8">
           
           {/* Left Column: Verdict & Summary (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
               <div className={`
-                 relative overflow-hidden rounded-[32px] p-8 border ${config.border} ${config.bg}
+                 relative overflow-hidden rounded-[32px] p-6 md:p-8 border ${config.border} ${config.bg}
                  flex flex-col items-center text-center shadow-lg
               `}>
                   {/* Decorative BG Icon */}
@@ -418,7 +418,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                   {/* Verdict Icon */}
                   <div className="relative mb-6">
                      <div className="absolute inset-0 bg-white dark:bg-slate-900 rounded-full blur-md opacity-50"></div>
-                     <div className="relative w-24 h-24 p-5 bg-white dark:bg-slate-900 rounded-3xl shadow-lg border border-white/20 dark:border-white/5 ring-1 ring-black/5">
+                     <div className="relative w-20 h-20 md:w-24 md:h-24 p-5 bg-white dark:bg-slate-900 rounded-3xl shadow-lg border border-white/20 dark:border-white/5 ring-1 ring-black/5">
                         {config.icon}
                      </div>
                      <div className="absolute -bottom-3 -right-3 w-10 h-10 bg-slate-900 dark:bg-white rounded-full flex items-center justify-center text-white dark:text-slate-900 font-bold text-sm border-4 border-white dark:border-slate-900 shadow-sm">
@@ -427,7 +427,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                   </div>
 
                   <span className="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Verdict</span>
-                  <h2 className={`text-4xl font-black tracking-tight mb-2 ${config.color}`}>{config.label}</h2>
+                  <h2 className={`text-3xl md:text-4xl font-black tracking-tight mb-2 ${config.color}`}>{config.label}</h2>
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400 px-4">{config.description}</p>
 
                   {/* Confidence Ring */}
@@ -492,13 +492,13 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
           <div className="lg:col-span-7 space-y-6">
               
               {/* Summary Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
                    <div className="absolute top-0 left-0 w-1 bg-indigo-500 h-full"></div>
                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                        <ShieldAlert className="w-5 h-5 text-indigo-500" />
                        Analysis Summary
                    </h3>
-                   <p className="text-xl md:text-2xl leading-relaxed text-slate-700 dark:text-slate-200 font-medium">
+                   <p className="text-lg md:text-2xl leading-relaxed text-slate-700 dark:text-slate-200 font-medium">
                        "{displayedResult.summary}"
                    </p>
               </div>
@@ -543,7 +543,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                )}
 
               {/* Key Findings */}
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-8 border border-slate-100 dark:border-slate-800">
+              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-3xl p-6 md:p-8 border border-slate-100 dark:border-slate-800">
                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
                        <ListChecks className="w-4 h-4" />
                        {t.keyFindings}
@@ -554,7 +554,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 shadow-sm">
                                 {idx + 1}
                             </span>
-                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{point}</p>
+                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm md:text-base">{point}</p>
                         </div>
                       ))}
                    </div>
@@ -612,7 +612,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ data, t, currentLanguage
                     <XCircle className="w-6 h-6" />
                  </button>
             </div>
-            <div className="p-6 bg-slate-50/30 dark:bg-black/20 h-[500px]">
+            <div className="p-4 md:p-6 bg-slate-50/30 dark:bg-black/20 h-[400px] md:h-[500px]">
                 <ChatWidget t={t} language={currentLanguage} analysisContext={data.result} />
             </div>
         </div>

@@ -154,22 +154,22 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 pt-16 md:pt-24 pb-32">
+      <main className="relative z-10 max-w-5xl mx-auto px-3 md:px-6 pt-6 md:pt-24 pb-32">
         
         {/* Hero / Intro */}
         {!result && !isLoading && (
-          <div className="text-center mb-16 md:mb-20 animate-fade-in">
-            <h2 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight leading-[1.1] drop-shadow-sm">
+          <div className="text-center mb-10 md:mb-20 animate-fade-in">
+            <h2 className="text-4xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-4 md:mb-6 tracking-tight leading-[1.1] drop-shadow-sm">
               <span className="block text-slate-900 dark:text-white">Verify Facts.</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 dark:from-indigo-400 dark:via-violet-400 dark:to-indigo-400 animate-gradient bg-300%">
                 Defeat Misinformation.
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
+            <p className="text-lg md:text-2xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-light px-4">
               {t.heroSubtitle}
             </p>
             
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm mt-10 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm mt-8 md:mt-10 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
                  <div className="flex h-2.5 w-2.5 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
@@ -190,21 +190,21 @@ const App: React.FC = () => {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="w-full max-w-xl mx-auto mt-20 text-center space-y-8 animate-fade-in">
-             <div className="relative w-28 h-28 mx-auto">
+          <div className="w-full max-w-xl mx-auto mt-12 md:mt-20 text-center space-y-6 md:space-y-8 animate-fade-in px-4">
+             <div className="relative w-24 h-24 md:w-28 md:h-28 mx-auto">
                 {/* Outer Ring */}
                 <div className="absolute inset-0 rounded-full border-[6px] border-slate-100 dark:border-slate-800/50"></div>
                 {/* Spinning Ring */}
                 <div className="absolute inset-0 rounded-full border-[6px] border-indigo-600/20 border-t-indigo-600 dark:border-indigo-400/20 dark:border-t-indigo-400 animate-spin"></div>
                 {/* Pulse Center */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center relative">
-                         <img src="/logo.svg" className="w-8 h-8 opacity-90 animate-pulse" alt="loading" />
+                    <div className="w-14 h-14 md:w-16 md:h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center relative">
+                         <img src="/logo.svg" className="w-7 h-7 md:w-8 md:h-8 opacity-90 animate-pulse" alt="loading" />
                     </div>
                 </div>
              </div>
              <div className="space-y-3">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center justify-center gap-3">
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center justify-center gap-3">
                   {t.analyzing}
                   <span className="flex gap-1">
                      <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
