@@ -85,7 +85,7 @@ It is available on three platforms:
 ### 1. Installation
 
 ```bash
-git clone https://github.com/yourusername/tathyasetu.git
+git clone https://github.com/krishrai-22/tathyasetu.git
 cd tathyasetu
 npm install
 ```
